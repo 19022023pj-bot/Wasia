@@ -417,9 +417,34 @@
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, addDoc, updateDoc, deleteDoc, onSnapshot, collection, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
+        // ==========================================
+        // 🔴 นำ Firebase Config ของคุณมาใส่ตรงนี้ (จำเป็นสำหรับการรันบน Vercel)
+        // ==========================================
+        const MY_FIREBASE_CONFIG = {
+            apiKey: "AIzaSyBu_a4VOpO_8tsVJ_vA93dY7boUdIqVkhY",
+            authDomain: "wasia-8d0a2.firebaseapp.com",
+            projectId: "wasia-8d0a2",
+            storageBucket: "wasia-8d0a2.firebasestorage.app",
+            messagingSenderId: "115901417569",
+            appId: "1:115901417569:web:c00ee2107fe2e76bcf4220",
+            measurementId: "G-GSZ34P873S"
+        };
+        // ==========================================
+
         // Initialize Firebase
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'smart-infirmary-demo';
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+        let firebaseConfig;
+        
+        if (typeof __firebase_config !== 'undefined' && __firebase_config) {
+            firebaseConfig = JSON.parse(__firebase_config); // สำหรับหน้าต่าง Preview
+        } else {
+            firebaseConfig = MY_FIREBASE_CONFIG; // สำหรับ Vercel
+            if (firebaseConfig.apiKey === "ใส่ข้อมูลของคุณ") {
+                console.error("Firebase Config is missing!");
+                document.getElementById('landing-branch-select').innerHTML = '<option>ไม่สามารถเชื่อมต่อฐานข้อมูลได้ กรุณาตั้งค่า Firebase Config</option>';
+            }
+        }
+
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
