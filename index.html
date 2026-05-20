@@ -7,6 +7,7 @@
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
     <style>
@@ -36,6 +37,9 @@
         .hidden-element {
             display: none !important;
         }
+        /* Custom scrollbar for small lists */
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
     </style>
 </head>
 <body class="min-h-screen text-gray-900 flex flex-col selection:bg-red-200">
@@ -56,6 +60,9 @@
 
     <main class="flex-1 flex flex-col w-full relative">
         
+        <!-- =======================
+             LANDING (PATIENT)
+        ======================== -->
         <section id="view-landing" class="view-section flex-col items-center justify-center min-h-[70vh] px-4 w-full max-w-md mx-auto active">
             <div class="bg-white w-full rounded-2xl shadow-xl p-8 border border-red-50 text-center flex flex-col gap-6">
                 <div class="bg-red-50 p-4 rounded-full w-20 h-20 mx-auto flex items-center justify-center">
@@ -71,6 +78,10 @@
                     <select id="landing-branch-select" class="w-full border-gray-300 rounded-lg shadow-sm p-3 border focus:ring-red-500 focus:border-red-500 outline-none">
                         <option value="">-- กำลังโหลดข้อมูลสาขา --</option>
                     </select>
+                    <!-- Nurse Online Status Display -->
+                    <div id="landing-nurse-status-container" class="mt-3 text-center h-6 transition-all">
+                        <!-- Injected by JS -->
+                    </div>
                 </div>
 
                 <button id="btn-goto-form" class="w-full py-4 rounded-xl font-bold text-lg text-white shadow-md transition-all bg-gray-300 cursor-not-allowed" disabled>
@@ -88,9 +99,12 @@
             </div>
         </section>
 
+        <!-- =======================
+             PATIENT FORM
+        ======================== -->
         <section id="view-patientForm" class="view-section flex-col items-center py-8 px-4 w-full max-w-lg mx-auto">
             <div class="w-full mb-4 flex justify-between items-center">
-                <button onclick="switchView('view-landing')" class="text-red-600 font-medium text-sm flex items-center">
+                <button onclick="switchView('view-landing')" class="text-red-600 font-medium text-sm flex items-center hover:underline">
                     &larr; กลับหน้าแรก
                 </button>
                 <span id="form-branch-name" class="bg-red-100 text-red-800 text-xs font-semibold px-2.5 py-0.5 rounded-full">
@@ -165,20 +179,20 @@
             </div>
         </section>
 
+        <!-- =======================
+             PATIENT QUEUE SCREEN
+        ======================== -->
         <section id="view-patientQueue" class="view-section flex-col items-center py-10 px-4 w-full max-w-md mx-auto">
             <div id="queue-loading" class="text-center p-10 mt-10">กำลังโหลดข้อมูลคิว...</div>
             
             <div id="queue-content" class="bg-white w-full rounded-2xl shadow-xl p-8 text-center relative overflow-hidden border border-gray-100 hidden-element">
-                <!-- Status Indicator Banner -->
                 <div id="q-status-banner" class="absolute top-0 left-0 w-full py-2 text-white font-bold text-sm tracking-wide bg-orange-500">
                     รอรับการตรวจ
                 </div>
 
                 <div class="mt-8 mb-6">
                     <h2 class="text-gray-500 font-medium">คิวของคุณคือ</h2>
-                    <div id="q-number" class="text-7xl font-extrabold text-gray-800 my-4 tracking-tighter">
-                        A---
-                    </div>
+                    <div id="q-number" class="text-7xl font-extrabold text-gray-800 my-4 tracking-tighter">A---</div>
                     <p id="q-name" class="text-lg font-semibold text-gray-700">Name</p>
                     <p id="q-empId" class="text-sm text-gray-500 mt-1">รหัสพนักงาน: ---</p>
                 </div>
@@ -194,12 +208,10 @@
                     <p class="text-green-600 text-sm mt-1">ขอให้สุขภาพแข็งแรงครับ/ค่ะ</p>
                 </div>
 
-                <button onclick="leaveQueue()" class="mt-4 text-gray-400 hover:text-gray-600 text-sm underline">
-                    ออกสู่หน้าแรก
-                </button>
+                <button onclick="leaveQueue()" class="mt-4 text-gray-400 hover:text-gray-600 text-sm underline">ออกสู่หน้าแรก</button>
             </div>
 
-            <!-- ALIVE MODAL - POPUP WHEN CALLED -->
+            <!-- ALERT MODAL -->
             <div id="q-alert-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 hidden-element">
                 <div class="bg-white rounded-3xl p-8 max-w-sm w-full text-center shadow-2xl animate-bounce-short border-4 border-red-500">
                     <div class="mx-auto bg-red-100 w-24 h-24 rounded-full flex items-center justify-center mb-6 animate-pulse">
@@ -215,40 +227,101 @@
             </div>
         </section>
 
+        <!-- =======================
+             NURSE LOGIN
+        ======================== -->
         <section id="view-nurseLogin" class="view-section flex-col items-center py-12 px-4 w-full max-w-md mx-auto">
             <div class="w-full mb-6">
-                <button onclick="switchView('view-landing')" class="text-gray-500 font-medium text-sm flex items-center">
+                <button onclick="switchView('view-landing')" class="text-gray-500 font-medium text-sm flex items-center hover:underline">
                     &larr; กลับหน้าแรก
                 </button>
             </div>
             <div class="bg-white w-full rounded-2xl shadow-lg p-8 border-t-4 border-red-600">
                 <div class="flex items-center gap-3 mb-6">
                     <i data-lucide="activity" class="w-8 h-8 text-red-600"></i>
-                    <h2 class="text-2xl font-bold text-gray-800">Nurse Login</h2>
+                    <h2 class="text-2xl font-bold text-gray-800">Nurse Portal</h2>
                 </div>
-                <form id="nurse-login-form" class="space-y-5">
+                <form id="nurse-login-form" class="space-y-4">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">เลือกสาขาประจำการ</label>
-                        <select required id="nurse-branch-select" class="w-full border-gray-300 rounded-lg shadow-sm p-3 border focus:ring-red-500 focus:border-red-500 outline-none">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Username (ชื่อผู้ใช้)</label>
+                        <input required id="nurse-login-user" type="text" class="w-full border-gray-300 rounded-lg shadow-sm p-3 border focus:ring-red-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Password (รหัสผ่าน)</label>
+                        <input required id="nurse-login-pass" type="password" class="w-full border-gray-300 rounded-lg shadow-sm p-3 border focus:ring-red-500 outline-none">
+                    </div>
+                    <button type="submit" class="w-full py-3 mt-2 rounded-lg font-bold text-white bg-red-600 hover:bg-red-700 shadow transition-all">
+                        เข้าสู่ระบบ
+                    </button>
+                </form>
+
+                <div class="mt-6 text-center border-t pt-4">
+                    <p class="text-sm text-gray-500">ยังไม่มีบัญชีใช่หรือไม่?</p>
+                    <button onclick="switchView('view-nurseRegister')" class="mt-2 text-red-600 hover:text-red-800 font-medium text-sm transition-colors">
+                        สมัครสมาชิกสำหรับพยาบาล
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- =======================
+             NURSE REGISTER
+        ======================== -->
+        <section id="view-nurseRegister" class="view-section flex-col items-center py-12 px-4 w-full max-w-md mx-auto">
+            <div class="w-full mb-6">
+                <button onclick="switchView('view-nurseLogin')" class="text-gray-500 font-medium text-sm flex items-center hover:underline">
+                    &larr; กลับหน้าล็อคอิน
+                </button>
+            </div>
+            <div class="bg-white w-full rounded-2xl shadow-lg p-8 border-t-4 border-blue-500">
+                <div class="flex items-center gap-3 mb-6">
+                    <i data-lucide="user-plus" class="w-8 h-8 text-blue-500"></i>
+                    <h2 class="text-2xl font-bold text-gray-800">ลงทะเบียนพยาบาล</h2>
+                </div>
+                <form id="nurse-register-form" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">ชื่อ - นามสกุล (แสดงให้ลูกค้าเห็น)</label>
+                        <input required id="reg-nurse-name" type="text" class="w-full border-gray-300 rounded-lg shadow-sm p-3 border focus:ring-blue-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">สาขาที่ประจำการ</label>
+                        <select required id="reg-nurse-branch" class="w-full border-gray-300 rounded-lg shadow-sm p-3 border focus:ring-blue-500 outline-none">
                             <option value="">-- กำลังโหลดข้อมูลสาขา --</option>
                         </select>
                     </div>
-                    <button type="submit" class="w-full py-3 rounded-lg font-bold text-white bg-red-600 hover:bg-red-700 shadow transition-all">
-                        เข้าสู่ระบบจัดการคิว
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Username (ใช้ล็อคอิน)</label>
+                        <input required id="reg-nurse-user" type="text" class="w-full border-gray-300 rounded-lg shadow-sm p-3 border focus:ring-blue-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                        <input required id="reg-nurse-pass" type="password" class="w-full border-gray-300 rounded-lg shadow-sm p-3 border focus:ring-blue-500 outline-none">
+                    </div>
+                    <button type="submit" class="w-full py-3 mt-2 rounded-lg font-bold text-white bg-blue-600 hover:bg-blue-700 shadow transition-all">
+                        ส่งคำขออนุมัติ
                     </button>
                 </form>
             </div>
         </section>
 
+        <!-- =======================
+             NURSE DASHBOARD
+        ======================== -->
         <section id="view-nurseDashboard" class="view-section flex-col w-full max-w-5xl mx-auto p-4 md:p-6">
-            <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4 w-full">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4 w-full bg-white p-4 rounded-xl shadow-sm border border-gray-100">
                 <div>
                     <h2 class="text-2xl font-bold text-gray-800 flex items-center gap-2">
-                        <i data-lucide="activity" class="text-red-600"></i> ระบบจัดการคิวพยาบาล
+                        <i data-lucide="activity" class="text-red-600"></i> Nurse Dashboard
                     </h2>
-                    <p class="text-gray-500">สาขา: <span id="nd-branch-name" class="font-semibold text-red-600">Branch Name</span></p>
+                    <p class="text-gray-500 mt-1 text-sm">
+                        สาขา: <span id="nd-branch-name" class="font-semibold text-gray-800 mr-3">Branch Name</span>
+                        พยาบาล: <span id="nd-nurse-name" class="font-semibold text-green-600 flex items-center gap-1 inline-flex">
+                            <span class="relative flex h-2.5 w-2.5"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span><span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500"></span></span>
+                            Nurse Name
+                        </span>
+                    </p>
                 </div>
-                <button onclick="logoutNurse()" class="flex items-center gap-2 text-gray-500 hover:text-red-600 bg-white px-4 py-2 rounded-lg shadow-sm border border-gray-200">
+                <button onclick="logoutNurse()" class="flex items-center gap-2 text-gray-500 hover:text-red-600 bg-gray-50 px-4 py-2 rounded-lg border border-gray-200 transition-colors">
                     <i data-lucide="log-out" class="w-4 h-4"></i> ออกจากระบบ
                 </button>
             </div>
@@ -308,9 +381,12 @@
             </div>
         </section>
 
+        <!-- =======================
+             ADMIN LOGIN
+        ======================== -->
         <section id="view-adminLogin" class="view-section flex-col items-center py-12 px-4 w-full max-w-md mx-auto">
             <div class="w-full mb-6">
-                <button onclick="switchView('view-landing')" class="text-gray-500 font-medium text-sm flex items-center">
+                <button onclick="switchView('view-landing')" class="text-gray-500 font-medium text-sm flex items-center hover:underline">
                     &larr; กลับหน้าแรก
                 </button>
             </div>
@@ -321,7 +397,7 @@
                 </div>
                 <form id="admin-login-form" class="space-y-5">
                     <div>
-                        <label class="block text-sm font-medium text-gray-400 mb-1">รหัสผ่าน (Hint: wasiaadmin)</label>
+                        <label class="block text-sm font-medium text-gray-400 mb-1">ใส่รหัสผ่าน</label>
                         <input required id="admin-password" type="password" class="w-full bg-gray-700 border-gray-600 rounded-lg shadow-sm p-3 text-white focus:ring-gray-400 focus:border-gray-400 outline-none">
                     </div>
                     <button type="submit" class="w-full py-3 rounded-lg font-bold bg-white text-gray-900 hover:bg-gray-200 shadow transition-all">
@@ -331,7 +407,10 @@
             </div>
         </section>
 
-        <section id="view-adminDashboard" class="view-section flex-col w-full max-w-5xl mx-auto p-4 md:p-6">
+        <!-- =======================
+             ADMIN DASHBOARD
+        ======================== -->
+        <section id="view-adminDashboard" class="view-section flex-col w-full max-w-6xl mx-auto p-4 md:p-6">
             <div class="flex justify-between items-center mb-8 pb-4 border-b w-full">
                 <h2 class="text-2xl font-bold text-gray-800 flex items-center gap-2">
                     <i data-lucide="settings" class="text-gray-600"></i> Admin Control Panel
@@ -343,40 +422,60 @@
 
             <div class="grid md:grid-cols-2 gap-8 w-full">
                 <!-- Branch Management -->
-                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                    <h3 class="font-bold text-lg text-gray-700 mb-4 flex items-center gap-2">
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 flex flex-col max-h-96">
+                    <h3 class="font-bold text-lg text-gray-700 mb-4 flex items-center gap-2 shrink-0">
                         <i data-lucide="plus-circle" class="w-5 h-5"></i> จัดการสาขา (Branches)
                     </h3>
-                    
-                    <form id="add-branch-form" class="flex gap-2 mb-6">
+                    <form id="add-branch-form" class="flex gap-2 mb-4 shrink-0">
                         <input type="text" id="new-branch-name" placeholder="ชื่อสาขาใหม่..." class="flex-1 border-gray-300 rounded-lg p-2 border focus:ring-red-500 outline-none" required />
                         <button type="submit" class="bg-gray-800 text-white px-4 py-2 rounded-lg hover:bg-gray-700">เพิ่ม</button>
                     </form>
-
-                    <div class="max-h-64 overflow-y-auto pr-2">
+                    <div class="overflow-y-auto custom-scrollbar flex-1 pr-2">
                         <ul id="admin-branch-list" class="space-y-2">
                             <!-- Populated by JS -->
                         </ul>
                     </div>
                 </div>
 
+                <!-- Nurse Management -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 flex flex-col max-h-96">
+                    <h3 class="font-bold text-lg text-gray-700 mb-4 flex items-center gap-2 shrink-0">
+                        <i data-lucide="users" class="w-5 h-5"></i> จัดการบัญชีพยาบาล
+                    </h3>
+                    <div class="overflow-y-auto custom-scrollbar flex-1 pr-2">
+                        <table class="w-full text-left text-sm">
+                            <thead class="bg-gray-50 sticky top-0">
+                                <tr>
+                                    <th class="p-2 text-gray-600 font-medium">ชื่อ/สาขา</th>
+                                    <th class="p-2 text-gray-600 font-medium">สถานะ</th>
+                                    <th class="p-2 text-gray-600 font-medium text-right">จัดการ</th>
+                                </tr>
+                            </thead>
+                            <tbody id="admin-nurses-list" class="divide-y divide-gray-100">
+                                <!-- Populated by JS -->
+                            </tbody>
+                        </table>
+                        <div id="admin-nurses-empty" class="text-gray-500 text-center py-4 hidden-element">ไม่มีข้อมูลพยาบาล</div>
+                    </div>
+                </div>
+
                 <!-- Logs -->
-                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 md:col-span-2">
                     <div class="flex justify-between items-center mb-4">
                         <h3 class="font-bold text-lg text-gray-700 flex items-center gap-2">
-                            <i data-lucide="file-text" class="w-5 h-5"></i> ประวัติการใช้งาน (Logs)
+                            <i data-lucide="file-text" class="w-5 h-5"></i> ประวัติการใช้งานผู้ป่วย (Logs)
                         </h3>
                         <div class="flex gap-3">
-                            <button onclick="exportAdminLogsToCSV()" class="text-sm text-green-600 hover:underline flex items-center gap-1 font-medium bg-green-50 px-2 py-1 rounded">
+                            <button onclick="exportAdminLogsToCSV()" class="text-sm text-green-600 hover:underline flex items-center gap-1 font-medium bg-green-50 px-2 py-1 rounded transition-colors">
                                 <i data-lucide="download" class="w-4 h-4"></i> Export Excel
                             </button>
-                            <button onclick="fetchAdminLogs()" class="text-sm text-blue-600 hover:underline flex items-center gap-1 bg-blue-50 px-2 py-1 rounded">
+                            <button onclick="fetchAdminLogs()" class="text-sm text-blue-600 hover:underline flex items-center gap-1 bg-blue-50 px-2 py-1 rounded transition-colors">
                                 <i data-lucide="refresh-cw" class="w-4 h-4"></i> Refresh
                             </button>
                         </div>
                     </div>
                     
-                    <div class="max-h-80 overflow-y-auto pr-2 text-sm w-full">
+                    <div class="max-h-60 overflow-y-auto custom-scrollbar pr-2 text-sm w-full">
                         <table class="w-full text-left">
                             <thead class="bg-gray-50 sticky top-0">
                                 <tr>
@@ -392,6 +491,16 @@
                         <div id="admin-log-empty" class="text-gray-500 text-center py-4 hidden-element">ไม่มีประวัติ</div>
                     </div>
                 </div>
+
+                <!-- Graph Report -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 md:col-span-2">
+                    <h3 class="font-bold text-lg text-gray-700 mb-4 flex items-center gap-2">
+                        <i data-lucide="bar-chart-3" class="w-5 h-5"></i> สถิติการเข้าใช้บริการ (แยกตามสาขา)
+                    </h3>
+                    <div class="w-full h-64">
+                        <canvas id="adminChart"></canvas>
+                    </div>
+                </div>
             </div>
         </section>
 
@@ -401,7 +510,7 @@
         © 2026 Smart Infirmary System. All rights reserved.
     </footer>
 
-    <!-- Global Modal for Messages (Replacing alert) -->
+    <!-- Global Modal for Messages -->
     <div id="global-msg-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 hidden-element">
         <div class="bg-white rounded-2xl p-6 max-w-sm w-full text-center shadow-2xl">
             <h3 id="global-msg-title" class="text-xl font-bold text-gray-900 mb-2">Message</h3>
@@ -412,10 +521,70 @@
         </div>
     </div>
 
+    <!-- Edit Branch Modal -->
+    <div id="branch-edit-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 hidden-element">
+        <div class="bg-white rounded-2xl p-6 max-w-sm w-full shadow-2xl">
+            <h3 class="text-xl font-bold text-gray-900 mb-4">แก้ไขชื่อสาขา</h3>
+            <form id="form-edit-branch">
+                <input type="hidden" id="edit-branch-id">
+                <input type="text" id="edit-branch-name" class="w-full border-gray-300 rounded-lg p-3 border mb-6 focus:ring-red-500 focus:border-red-500 outline-none" required>
+                <div class="flex gap-3">
+                    <button type="button" onclick="closeEditBranchModal()" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold py-3 rounded-xl transition-all">ยกเลิก</button>
+                    <button type="submit" class="flex-1 bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-xl transition-all">บันทึก</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit Nurse Modal -->
+    <div id="nurse-edit-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 hidden-element">
+        <div class="bg-white rounded-2xl p-6 max-w-sm w-full shadow-2xl">
+            <h3 class="text-xl font-bold text-gray-900 mb-4">แก้ไขข้อมูลพยาบาล</h3>
+            <form id="form-edit-nurse" class="space-y-3">
+                <input type="hidden" id="edit-nurse-id">
+                <div>
+                    <label class="block text-xs font-medium text-gray-700 mb-1">ชื่อ - นามสกุล</label>
+                    <input type="text" id="edit-nurse-name" class="w-full border-gray-300 rounded-lg p-2 border focus:ring-blue-500 outline-none" required>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-700 mb-1">สาขา</label>
+                    <select id="edit-nurse-branch" class="w-full border-gray-300 rounded-lg p-2 border focus:ring-blue-500 outline-none" required></select>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-700 mb-1">Username</label>
+                    <input type="text" id="edit-nurse-username" class="w-full border-gray-300 rounded-lg p-2 border focus:ring-blue-500 outline-none" required>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-700 mb-1">Password</label>
+                    <input type="text" id="edit-nurse-password" class="w-full border-gray-300 rounded-lg p-2 border focus:ring-blue-500 outline-none" required>
+                </div>
+                <div class="flex gap-3 pt-3">
+                    <button type="button" onclick="closeEditNurseModal()" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold py-2 rounded-xl transition-all">ยกเลิก</button>
+                    <button type="submit" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded-xl transition-all">บันทึก</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Custom Confirm Modal for Delete -->
+    <div id="confirm-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 hidden-element">
+        <div class="bg-white rounded-2xl p-6 max-w-sm w-full text-center shadow-2xl">
+            <div class="mx-auto bg-red-100 w-16 h-16 rounded-full flex items-center justify-center mb-4">
+                <i data-lucide="alert-triangle" class="w-8 h-8 text-red-600"></i>
+            </div>
+            <h3 class="text-xl font-bold text-gray-900 mb-2">ยืนยันการลบ?</h3>
+            <p class="text-gray-600 mb-6">คุณแน่ใจหรือไม่ว่าต้องการลบข้อมูลนี้ ไม่สามารถกู้คืนได้</p>
+            <div class="flex gap-3">
+                <button onclick="closeConfirmModal()" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold py-3 rounded-xl transition-all">ยกเลิก</button>
+                <button id="btn-confirm-delete" class="flex-1 bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-xl transition-all">ยืนยันลบ</button>
+            </div>
+        </div>
+    </div>
+
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, addDoc, updateDoc, deleteDoc, onSnapshot, collection, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, addDoc, updateDoc, deleteDoc, onSnapshot, collection, getDocs, serverTimestamp, query, where } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // ==========================================
         // Firebase Configuration
@@ -430,15 +599,8 @@
             measurementId: "G-GSZ34P873S"
         };
 
-        // Initialize Firebase
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'smart-infirmary-demo';
-        let firebaseConfig;
-        
-        if (typeof __firebase_config !== 'undefined' && __firebase_config) {
-            firebaseConfig = JSON.parse(__firebase_config);
-        } else {
-            firebaseConfig = MY_FIREBASE_CONFIG;
-        }
+        let firebaseConfig = (typeof __firebase_config !== 'undefined' && __firebase_config) ? JSON.parse(__firebase_config) : MY_FIREBASE_CONFIG;
 
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
@@ -447,20 +609,26 @@
         // Strict Paths (Rule 1)
         const branchesPath = `artifacts/${appId}/public/data/branches`;
         const queuesPath = `artifacts/${appId}/public/data/queues`;
+        const nursesPath = `artifacts/${appId}/public/data/nurses`;
 
         // Global State
         let currentUser = null;
         let branchesList = [];
         let allQueuesList = [];
+        let nursesList = [];
         
         let unsubBranches = null;
         let unsubQueuesAll = null;
         let unsubMyQueue = null;
+        let unsubNurses = null;
 
         let selectedBranchId = '';
         let myQueueId = null;
         let myQueueData = null;
+        
+        let currentNurseDocId = null;
         let nurseBranchId = '';
+        let currentNurseName = '';
 
         window.switchView = switchView;
         window.leaveQueue = leaveQueue;
@@ -475,6 +643,14 @@
         window.showGlobalMsg = showGlobalMsg;
         window.switchNurseTab = switchNurseTab;
         window.exportAdminLogsToCSV = exportAdminLogsToCSV;
+        window.openEditBranchModal = openEditBranchModal;
+        window.closeEditBranchModal = closeEditBranchModal;
+        window.approveNurse = approveNurse;
+        window.deleteNurse = deleteNurse;
+        window.openEditNurseModal = openEditNurseModal;
+        window.closeEditNurseModal = closeEditNurseModal;
+        window.confirmDeleteNurse = confirmDeleteNurse;
+        window.closeConfirmModal = closeConfirmModal;
 
         lucide.createIcons();
 
@@ -494,11 +670,19 @@
             currentUser = user;
             if (user) {
                 startBranchListener();
+                startNursesListener();
             }
         });
 
         initAuth();
         initUI();
+
+        // Manage Online status on window close
+        window.addEventListener('beforeunload', () => {
+            if (currentNurseDocId && currentUser) {
+                updateDoc(doc(db, nursesPath, currentNurseDocId), { isOnline: false }).catch(()=>{});
+            }
+        });
 
         function switchView(viewId) {
             document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
@@ -515,12 +699,18 @@
             else if (viewId === 'view-nurseDashboard') {
                 const bName = branchesList.find(b => b.id === nurseBranchId)?.name || '';
                 document.getElementById('nd-branch-name').innerText = bName;
+                document.getElementById('nd-nurse-name').innerHTML = `
+                    <span class="relative flex h-2.5 w-2.5 mr-1"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span><span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500"></span></span>
+                    ${escapeHtml(currentNurseName)}
+                `;
                 startQueuesListener();
                 switchNurseTab('queue');
             }
             else if (viewId === 'view-adminDashboard') {
                 fetchAdminLogs();
+                renderAdminNurses();
             }
+            
             if (viewId !== 'view-nurseDashboard' && unsubQueuesAll) {
                 unsubQueuesAll();
                 unsubQueuesAll = null;
@@ -556,21 +746,48 @@
             }, (error) => console.error(error));
         }
 
+        function startNursesListener() {
+            if (!currentUser) return;
+            unsubNurses = onSnapshot(collection(db, nursesPath), (snapshot) => {
+                nursesList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                renderNurseStatusDisplay();
+                renderAdminNurses();
+            });
+        }
+
         async function seedDefaultBranches() {
             const branchesRef = collection(db, branchesPath);
             await addDoc(branchesRef, { name: 'สำนักงานใหญ่ (HQ)' });
             await addDoc(branchesRef, { name: 'สาขา 01 - กรุงเทพ' });
-            await addDoc(branchesRef, { name: 'สาขา 02 - เชียงใหม่' });
         }
 
         function renderBranchSelects() {
             const optionsHTML = '<option value="">-- กรุณาเลือกสาขา --</option>' + 
                 branchesList.map(b => `<option value="${b.id}">${b.name}</option>`).join('');
-            const ls = document.getElementById('landing-branch-select');
-            const ns = document.getElementById('nurse-branch-select');
-            ls.innerHTML = optionsHTML;
-            ns.innerHTML = optionsHTML;
+            document.getElementById('landing-branch-select').innerHTML = optionsHTML;
+            document.getElementById('reg-nurse-branch').innerHTML = optionsHTML;
+            
+            const editNurseBranch = document.getElementById('edit-nurse-branch');
+            if(editNurseBranch) editNurseBranch.innerHTML = optionsHTML;
+            
             checkLandingBtn();
+        }
+
+        function renderNurseStatusDisplay() {
+            const container = document.getElementById('landing-nurse-status-container');
+            if (!selectedBranchId) {
+                container.innerHTML = '';
+                return;
+            }
+            
+            const onlineNurses = nursesList.filter(n => n.branchId === selectedBranchId && n.isOnline === true && n.approvalStatus === 'approved');
+            
+            if (onlineNurses.length > 0) {
+                const names = onlineNurses.map(n => n.name).join(', ');
+                container.innerHTML = `<span class="text-green-600 font-medium text-sm flex items-center justify-center gap-1"><span class="relative flex h-3 w-3"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span><span class="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span></span> ออนไลน์: ${escapeHtml(names)}</span>`;
+            } else {
+                container.innerHTML = `<span class="text-gray-400 font-medium text-sm flex items-center justify-center gap-1"><span class="h-3 w-3 rounded-full bg-gray-300"></span> ออฟไลน์ (ไม่มีพยาบาลประจำการ)</span>`;
+            }
         }
 
         function renderAdminBranches() {
@@ -579,18 +796,102 @@
                 list.innerHTML = branchesList.map(b => `
                     <li class="flex justify-between items-center p-3 hover:bg-gray-50 border-b border-gray-100 rounded-lg">
                         <span class="font-medium text-gray-700">${escapeHtml(b.name)}</span>
-                        <button onclick="deleteBranch('${b.id}')" class="text-red-500 hover:text-red-700 text-sm bg-red-50 px-3 py-1 rounded-md transition-colors">
-                            ลบ
-                        </button>
+                        <div class="flex gap-2">
+                            <button onclick="openEditBranchModal('${b.id}', '${escapeHtml(b.name.replace(/'/g, "\\'"))}')" class="text-blue-600 hover:text-blue-800 text-sm bg-blue-50 px-3 py-1 rounded-md transition-colors">แก้ไข</button>
+                            <button onclick="deleteBranch('${b.id}')" class="text-red-500 hover:text-red-700 text-sm bg-red-50 px-3 py-1 rounded-md transition-colors">ลบ</button>
+                        </div>
                     </li>
                 `).join('');
             }
+        }
+
+        function renderAdminNurses() {
+            const list = document.getElementById('admin-nurses-list');
+            const empty = document.getElementById('admin-nurses-empty');
+            if (!list || !empty) return;
+
+            if (nursesList.length === 0) {
+                list.innerHTML = '';
+                empty.classList.remove('hidden-element');
+            } else {
+                empty.classList.add('hidden-element');
+                list.innerHTML = nursesList.map(n => {
+                    const bName = branchesList.find(b => b.id === n.branchId)?.name || 'ไม่พบสาขา';
+                    const isPending = n.approvalStatus === 'pending';
+                    
+                    let statusBadge = isPending 
+                        ? `<span class="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded font-medium">รออนุมัติ</span>`
+                        : `<span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded font-medium">อนุมัติแล้ว</span>`;
+                    
+                    let actions = isPending
+                        ? `<button onclick="approveNurse('${n.id}')" class="text-green-600 bg-green-50 px-2 py-1 rounded text-xs hover:bg-green-100 mr-1">อนุมัติ</button>`
+                        : '';
+                    
+                    actions += `
+                        <button onclick="openEditNurseModal('${n.id}')" class="text-blue-600 bg-blue-50 px-2 py-1 rounded text-xs hover:bg-blue-100 mr-1">แก้ไข</button>
+                        <button onclick="confirmDeleteNurse('${n.id}')" class="text-red-600 bg-red-50 px-2 py-1 rounded text-xs hover:bg-red-100">ลบ</button>
+                    `;
+
+                    return `
+                        <tr class="border-b border-gray-50 hover:bg-gray-50">
+                            <td class="p-2">
+                                <div class="font-medium text-gray-800">${escapeHtml(n.name)}</div>
+                                <div class="text-xs text-gray-500">${escapeHtml(bName)}</div>
+                            </td>
+                            <td class="p-2">${statusBadge}</td>
+                            <td class="p-2 text-right">${actions}</td>
+                        </tr>
+                    `;
+                }).join('');
+            }
+        }
+
+        async function approveNurse(id) {
+            if (!currentUser) return;
+            await updateDoc(doc(db, nursesPath, id), { approvalStatus: 'approved' });
+        }
+        
+        async function deleteNurse(id) {
+            if (!currentUser) return;
+            await deleteDoc(doc(db, nursesPath, id));
+        }
+
+        let pendingDeleteNurseId = null;
+
+        function confirmDeleteNurse(id) {
+            pendingDeleteNurseId = id;
+            document.getElementById('confirm-modal').classList.remove('hidden-element');
+            document.getElementById('btn-confirm-delete').onclick = async () => {
+                await deleteNurse(pendingDeleteNurseId);
+                closeConfirmModal();
+            };
+        }
+
+        function closeConfirmModal() {
+            pendingDeleteNurseId = null;
+            document.getElementById('confirm-modal').classList.add('hidden-element');
+        }
+
+        function openEditNurseModal(id) {
+            const nurse = nursesList.find(n => n.id === id);
+            if(!nurse) return;
+            document.getElementById('edit-nurse-id').value = nurse.id;
+            document.getElementById('edit-nurse-name').value = nurse.name;
+            document.getElementById('edit-nurse-branch').value = nurse.branchId;
+            document.getElementById('edit-nurse-username').value = nurse.username;
+            document.getElementById('edit-nurse-password').value = nurse.password;
+            document.getElementById('nurse-edit-modal').classList.remove('hidden-element');
+        }
+
+        function closeEditNurseModal() {
+            document.getElementById('nurse-edit-modal').classList.add('hidden-element');
         }
 
         function initUI() {
             document.getElementById('landing-branch-select').addEventListener('change', (e) => {
                 selectedBranchId = e.target.value;
                 checkLandingBtn();
+                renderNurseStatusDisplay();
             });
 
             document.getElementById('btn-goto-form').addEventListener('click', () => {
@@ -608,6 +909,7 @@
                 }
             });
 
+            // Patient Submit
             document.getElementById('patient-form').addEventListener('submit', async (e) => {
                 e.preventDefault();
                 if (!selectedBranchId || !currentUser) return;
@@ -624,17 +926,10 @@
                     const date = document.getElementById('p-date').value;
                     const time = document.getElementById('p-time').value;
 
-                    const queuesRef = collection(db, queuesPath);
-                    const docRef = await addDoc(queuesRef, {
-                        branchId: selectedBranchId,
-                        patientName: name,
-                        empId: empId,
-                        symptom: finalSymptom,
-                        needRest: needRest,
-                        status: 'waiting',
-                        createdAt: serverTimestamp(),
-                        date: date,
-                        time: time
+                    const docRef = await addDoc(collection(db, queuesPath), {
+                        branchId: selectedBranchId, patientName: name, empId: empId,
+                        symptom: finalSymptom, needRest: needRest, status: 'waiting',
+                        createdAt: serverTimestamp(), date: date, time: time
                     });
                     
                     myQueueId = docRef.id;
@@ -648,16 +943,67 @@
                 }
             });
 
-            document.getElementById('nurse-login-form').addEventListener('submit', (e) => {
+            // Nurse Register
+            document.getElementById('nurse-register-form').addEventListener('submit', async (e) => {
                 e.preventDefault();
-                nurseBranchId = document.getElementById('nurse-branch-select').value;
-                if (nurseBranchId) switchView('view-nurseDashboard');
+                const name = document.getElementById('reg-nurse-name').value;
+                const branchId = document.getElementById('reg-nurse-branch').value;
+                const username = document.getElementById('reg-nurse-user').value;
+                const password = document.getElementById('reg-nurse-pass').value;
+
+                // Check if username exists
+                if (nursesList.some(n => n.username === username)) {
+                    showGlobalMsg('Error', 'Username นี้ถูกใช้งานแล้ว กรุณาใช้ชื่ออื่น');
+                    return;
+                }
+
+                await addDoc(collection(db, nursesPath), {
+                    name, branchId, username, password,
+                    approvalStatus: 'pending', isOnline: false, createdAt: serverTimestamp()
+                });
+
+                document.getElementById('nurse-register-form').reset();
+                showGlobalMsg('สำเร็จ', 'ส่งคำขอสมัครสำเร็จ กรุณารอแอดมินอนุมัติ');
+                switchView('view-nurseLogin');
             });
 
+            // Nurse Login
+            document.getElementById('nurse-login-form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const user = document.getElementById('nurse-login-user').value;
+                const pass = document.getElementById('nurse-login-pass').value;
+
+                const nurse = nursesList.find(n => n.username === user && n.password === pass);
+
+                if (!nurse) {
+                    showGlobalMsg('เข้าสู่ระบบล้มเหลว', 'Username หรือ Password ไม่ถูกต้อง');
+                    return;
+                }
+                if (nurse.approvalStatus !== 'approved') {
+                    showGlobalMsg('รอการอนุมัติ', 'ไอดีของคุณกำลังรอการอนุมัติจากแอดมิน ไม่สามารถเข้าใช้งานได้');
+                    return;
+                }
+
+                currentNurseDocId = nurse.id;
+                nurseBranchId = nurse.branchId;
+                currentNurseName = nurse.name;
+
+                // Set online status
+                await updateDoc(doc(db, nursesPath, currentNurseDocId), { isOnline: true });
+
+                document.getElementById('nurse-login-form').reset();
+                switchView('view-nurseDashboard');
+            });
+
+            // Admin Login
             document.getElementById('admin-login-form').addEventListener('submit', (e) => {
                 e.preventDefault();
-                if (document.getElementById('admin-password').value === 'wasiaadmin') switchView('view-adminDashboard');
-                else showGlobalMsg('Login Failed', 'รหัสผ่านไม่ถูกต้อง');
+                if (document.getElementById('admin-password').value === 'wasiaadmin') {
+                    document.getElementById('admin-password').value = '';
+                    switchView('view-adminDashboard');
+                } else {
+                    showGlobalMsg('Login Failed', 'รหัสผ่านไม่ถูกต้อง');
+                }
             });
 
             document.getElementById('add-branch-form').addEventListener('submit', async (e) => {
@@ -665,6 +1011,37 @@
                 const bName = document.getElementById('new-branch-name').value;
                 if (bName) await addDoc(collection(db, branchesPath), { name: bName });
                 document.getElementById('new-branch-name').value = '';
+            });
+
+            document.getElementById('form-edit-branch').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const id = document.getElementById('edit-branch-id').value;
+                const newName = document.getElementById('edit-branch-name').value;
+                if (id && newName) {
+                    await updateDoc(doc(db, branchesPath, id), { name: newName });
+                    closeEditBranchModal();
+                }
+            });
+
+            document.getElementById('form-edit-nurse').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const id = document.getElementById('edit-nurse-id').value;
+                if (!id) return;
+                
+                const name = document.getElementById('edit-nurse-name').value;
+                const branchId = document.getElementById('edit-nurse-branch').value;
+                const username = document.getElementById('edit-nurse-username').value;
+                const password = document.getElementById('edit-nurse-password').value;
+                
+                // ตรวจสอบว่า Username ซ้ำกับคนอื่นหรือไม่
+                if (nursesList.some(n => n.username === username && n.id !== id)) {
+                    showGlobalMsg('ข้อผิดพลาด', 'Username นี้ถูกใช้งานแล้ว กรุณาใช้ชื่ออื่น');
+                    return;
+                }
+
+                await updateDoc(doc(db, nursesPath, id), { name, branchId, username, password });
+                closeEditNurseModal();
+                showGlobalMsg('สำเร็จ', 'อัปเดตข้อมูลพยาบาลเรียบร้อยแล้ว');
             });
         }
 
@@ -679,6 +1056,7 @@
             }
         }
 
+        // ... (Queue listening logic remains same) ...
         function startMyQueueListener() {
             if (!currentUser || !myQueueId) return;
             unsubMyQueue = onSnapshot(doc(db, queuesPath, myQueueId), (docSnap) => {
@@ -747,30 +1125,77 @@
             const branchQueues = allQueuesList.filter(q => q.branchId === nurseBranchId && q.status !== 'completed');
             const activeQueues = branchQueues.filter(q => q.status === 'called' || q.status === 'acknowledged');
             const waitingQueues = branchQueues.filter(q => q.status === 'waiting').sort((a,b) => (a.createdAt?.seconds || 0) - (b.createdAt?.seconds || 0));
+            
             document.getElementById('nd-active-count').innerText = `(${activeQueues.length})`;
             document.getElementById('nd-waiting-count').innerText = `(${waitingQueues.length})`;
+            
             document.getElementById('nd-active-list').innerHTML = activeQueues.map(q => `
                 <div class="bg-white p-4 shadow rounded-lg border-l-4 border-blue-500">
                     <div class="font-bold">${escapeHtml(q.patientName)}</div>
-                    <div class="text-sm">${q.status === 'acknowledged' ? 'กำลังตรวจ' : 'รอรับการตรวจ'}</div>
-                    ${q.status === 'acknowledged' ? `<button onclick="completeQueue('${q.id}')" class="mt-2 w-full bg-blue-600 text-white rounded py-1">เสร็จสิ้น</button>` : ''}
+                    <div class="text-sm text-gray-600">${q.status === 'acknowledged' ? 'กำลังตรวจ' : 'รอรับการตรวจ'}</div>
+                    ${q.status === 'acknowledged' ? `<button onclick="completeQueue('${q.id}')" class="mt-3 w-full bg-blue-600 hover:bg-blue-700 transition-colors text-white rounded py-2 font-medium shadow">ตรวจเสร็จสิ้น</button>` : ''}
                 </div>`).join('');
+                
             document.getElementById('nd-waiting-list').innerHTML = waitingQueues.map((q, i) => `
                 <li class="p-4 flex justify-between items-center border-b">
-                    <div><b>${escapeHtml(q.patientName)}</b> (A${q.id.substring(0,3).toUpperCase()})</div>
-                    <button onclick="callPatient('${q.id}')" class="bg-red-600 text-white px-3 py-1 rounded">เรียกคิว</button>
+                    <div><b class="text-gray-800">${escapeHtml(q.patientName)}</b> <span class="text-xs text-gray-500 ml-2">A${q.id.substring(0,3).toUpperCase()}</span></div>
+                    <button onclick="callPatient('${q.id}')" class="bg-red-600 hover:bg-red-700 transition-colors shadow text-white px-4 py-1.5 rounded-lg text-sm font-medium">เรียกคิว</button>
                 </li>`).join('');
             lucide.createIcons();
+            
+            // Render Reports too
+            const completedQueues = allQueuesList.filter(q => q.branchId === nurseBranchId && q.status === 'completed')
+                                        .sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+            const reportContainer = document.getElementById('nd-report-list');
+            const reportEmpty = document.getElementById('nd-report-empty');
+            
+            if (completedQueues.length === 0) {
+                reportContainer.innerHTML = '';
+                reportEmpty.classList.remove('hidden-element');
+            } else {
+                reportEmpty.classList.add('hidden-element');
+                reportContainer.innerHTML = completedQueues.map(q => {
+                    const dateStr = q.date || (q.createdAt ? new Date(q.createdAt.seconds * 1000).toLocaleDateString('th-TH') : '');
+                    return `
+                        <tr class="hover:bg-gray-50 border-b border-gray-50">
+                            <td class="p-3 text-gray-600">${escapeHtml(dateStr)}</td>
+                            <td class="p-3 font-medium text-gray-800">${escapeHtml(q.patientName)}</td>
+                            <td class="p-3 text-gray-600">${escapeHtml(q.empId)}</td>
+                            <td class="p-3 text-gray-600">${escapeHtml(q.symptom)}</td>
+                            <td class="p-3 text-gray-600">${q.needRest ? '<span class="text-purple-600">นอนพัก</span>' : 'ไม่นอนพัก'}</td>
+                        </tr>
+                    `;
+                }).join('');
+            }
         }
 
         function switchNurseTab(tab) {
+            const btnQueue = document.getElementById('tab-nurse-queue');
+            const btnReport = document.getElementById('tab-nurse-report');
             document.getElementById('nurse-view-queue').classList.toggle('hidden-element', tab !== 'queue');
             document.getElementById('nurse-view-report').classList.toggle('hidden-element', tab === 'queue');
+            
+            if (tab === 'queue') {
+                btnQueue.classList.add('border-red-600', 'text-red-600'); btnQueue.classList.remove('border-transparent', 'text-gray-500');
+                btnReport.classList.add('border-transparent', 'text-gray-500'); btnReport.classList.remove('border-red-600', 'text-red-600');
+            } else {
+                btnReport.classList.add('border-red-600', 'text-red-600'); btnReport.classList.remove('border-transparent', 'text-gray-500');
+                btnQueue.classList.add('border-transparent', 'text-gray-500'); btnQueue.classList.remove('border-red-600', 'text-red-600');
+            }
         }
 
         async function callPatient(id) { await updateDoc(doc(db, queuesPath, id), { status: 'called' }); }
         async function completeQueue(id) { await updateDoc(doc(db, queuesPath, id), { status: 'completed', completedAt: serverTimestamp() }); }
-        function logoutNurse() { switchView('view-landing'); }
+        
+        async function logoutNurse() { 
+            if (currentNurseDocId) {
+                await updateDoc(doc(db, nursesPath, currentNurseDocId), { isOnline: false });
+                currentNurseDocId = null;
+                nurseBranchId = '';
+            }
+            switchView('view-landing'); 
+        }
+        
         async function deleteBranch(id) { await deleteDoc(doc(db, branchesPath, id)); }
         function logoutAdmin() { switchView('view-landing'); }
 
@@ -778,7 +1203,68 @@
             const snapshot = await getDocs(collection(db, queuesPath));
             const logs = snapshot.docs.map(d => ({id: d.id, ...d.data()})).filter(d => d.status === 'completed');
             const container = document.getElementById('admin-log-list');
-            container.innerHTML = logs.map(l => `<tr><td class="p-2">${l.patientName}</td><td class="p-2">${l.symptom}</td></tr>`).join('');
+            const empty = document.getElementById('admin-log-empty');
+            
+            if(logs.length === 0) {
+                container.innerHTML = '';
+                empty.classList.remove('hidden-element');
+            } else {
+                empty.classList.add('hidden-element');
+                container.innerHTML = logs.map(l => `<tr><td class="p-2">${l.date || ''}</td><td class="p-2">${l.patientName}</td><td class="p-2">${l.symptom}</td></tr>`).join('');
+            }
+            updateAdminChart(logs);
+        }
+
+        function updateAdminChart(completedLogs) {
+            const ctx = document.getElementById('adminChart');
+            if (!ctx) return;
+
+            const counts = {};
+            completedLogs.forEach(log => {
+                counts[log.branchId] = (counts[log.branchId] || 0) + 1;
+            });
+
+            const labels = [];
+            const data = [];
+            branchesList.forEach(b => {
+                labels.push(b.name);
+                data.push(counts[b.id] || 0);
+            });
+
+            if (window.adminChartInstance) {
+                window.adminChartInstance.destroy();
+            }
+
+            window.adminChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'จำนวนผู้เข้าใช้บริการ (คน)',
+                        data: data,
+                        backgroundColor: '#3b82f6',
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: { 
+                        y: { beginAtZero: true, ticks: { stepSize: 1, precision: 0 } } 
+                    },
+                    plugins: { legend: { display: false } }
+                }
+            });
+        }
+
+        function openEditBranchModal(id, name) {
+            document.getElementById('edit-branch-id').value = id;
+            document.getElementById('edit-branch-name').value = name;
+            document.getElementById('branch-edit-modal').classList.remove('hidden-element');
+        }
+
+        function closeEditBranchModal() {
+            document.getElementById('branch-edit-modal').classList.add('hidden-element');
         }
         
         function escapeHtml(str) { return str.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m])); }
