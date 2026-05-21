@@ -130,6 +130,16 @@
                     </div>
 
                     <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">เพศ</label>
+                        <select required id="p-gender" class="w-full border-gray-300 rounded-lg shadow-sm p-3 border focus:ring-red-500 focus:border-red-500 outline-none">
+                            <option value="">-- เลือกเพศ --</option>
+                            <option value="ชาย">ชาย</option>
+                            <option value="หญิง">หญิง</option>
+                            <option value="อื่นๆ">อื่นๆ/ไม่ระบุ</option>
+                        </select>
+                    </div>
+
+                    <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">อาการเจ็บป่วยเบื้องต้น</label>
                         <select required id="p-symptom" class="w-full border-gray-300 rounded-lg shadow-sm p-3 border focus:ring-red-500 focus:border-red-500 outline-none">
                             <option value="">-- เลือกอาการ --</option>
@@ -481,7 +491,9 @@
                             <thead class="bg-gray-50 sticky top-0">
                                 <tr>
                                     <th class="p-2 text-gray-600 font-medium">วันที่</th>
+                                    <th class="p-2 text-gray-600 font-medium">สาขา</th>
                                     <th class="p-2 text-gray-600 font-medium">ชื่อ/รหัส</th>
+                                    <th class="p-2 text-gray-600 font-medium">เพศ</th>
                                     <th class="p-2 text-gray-600 font-medium">อาการ</th>
                                 </tr>
                             </thead>
@@ -496,26 +508,24 @@
                 <!-- Graph Report -->
                 <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 md:col-span-2">
                     <h3 class="font-bold text-lg text-gray-700 mb-4 flex items-center gap-2">
-                        <i data-lucide="bar-chart-3" class="w-5 h-5"></i> สถิติการเข้าใช้บริการ (แยกตามสาขา)
+                        <i data-lucide="bar-chart-3" class="w-5 h-5"></i> สถิติภาพรวม (Dashboards)
                     </h3>
-                    <div class="w-full h-64">
-                        <canvas id="adminChart"></canvas>
+                    <div class="grid md:grid-cols-3 gap-6 w-full">
+                        <div class="w-full h-64 border rounded p-2">
+                            <canvas id="adminBranchChart"></canvas>
+                        </div>
+                        <div class="w-full h-64 border rounded p-2">
+                            <canvas id="adminGenderChart"></canvas>
+                        </div>
+                        <div class="w-full h-64 border rounded p-2">
+                            <canvas id="adminSymptomChart"></canvas>
+                        </div>
                     </div>
                 </div>
             </div>
         </section>
 
-    </main>
-
-    <footer class="py-4 text-center text-xs text-gray-400 mt-auto bg-white border-t">
-        © 2026 Smart Infirmary System. All rights reserved.
-    </footer>
-
-    <!-- Global Modal for Messages -->
-    <div id="global-msg-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 hidden-element">
-        <div class="bg-white rounded-2xl p-6 max-w-sm w-full text-center shadow-2xl">
-            <h3 id="global-msg-title" class="text-xl font-bold text-gray-900 mb-2">Message</h3>
-            <p id="global-msg-desc" class="text-gray-600 mb-6">Description goes here.</p>
+        <section id="view-adminLogin" class="view-section flex-col items-center py-12 px-4 w-full max-w-md mx-auto">
             <button onclick="closeGlobalMsg()" class="w-full bg-gray-800 hover:bg-gray-900 text-white font-bold py-3 rounded-xl transition-all">
                 ตกลง
             </button>
@@ -630,6 +640,8 @@
         let currentNurseDocId = null;
         let nurseBranchId = '';
         let currentNurseName = '';
+        
+        let adminLogsData = []; // Store logs globally for CSV Export
 
         window.switchView = switchView;
         window.leaveQueue = leaveQueue;
@@ -945,6 +957,7 @@
                 try {
                     const name = document.getElementById('p-name').value;
                     const empId = document.getElementById('p-empId').value;
+                    const gender = document.getElementById('p-gender').value;
                     const sympSelect = document.getElementById('p-symptom').value;
                     const sympOther = document.getElementById('p-symptom-other').value;
                     const finalSymptom = sympSelect === 'อื่นๆ (ระบุ)' ? sympOther : sympSelect;
@@ -953,7 +966,7 @@
                     const time = document.getElementById('p-time').value;
 
                     const docRef = await addDoc(collection(db, queuesPath), {
-                        branchId: selectedBranchId, patientName: name, empId: empId,
+                        branchId: selectedBranchId, patientName: name, empId: empId, gender: gender,
                         symptom: finalSymptom, needRest: needRest, status: 'waiting',
                         createdAt: serverTimestamp(), date: date, time: time
                     });
@@ -1241,6 +1254,7 @@
         async function fetchAdminLogs() {
             const snapshot = await getDocs(collection(db, queuesPath));
             const logs = snapshot.docs.map(d => ({id: d.id, ...d.data()})).filter(d => d.status === 'completed');
+            adminLogsData = logs; // บันทึกข้อมูลลงตัวแปร Global สำหรับ Export
             const container = document.getElementById('admin-log-list');
             const empty = document.getElementById('admin-log-empty');
             
@@ -1249,51 +1263,76 @@
                 empty.classList.remove('hidden-element');
             } else {
                 empty.classList.add('hidden-element');
-                container.innerHTML = logs.map(l => `<tr><td class="p-2">${l.date || ''}</td><td class="p-2">${l.patientName}</td><td class="p-2">${l.symptom}</td></tr>`).join('');
+                container.innerHTML = logs.map(l => {
+                    const bName = branchesList.find(b => b.id === l.branchId)?.name || 'ไม่พบสาขา';
+                    return `
+                        <tr>
+                            <td class="p-2">${l.date || ''}</td>
+                            <td class="p-2 text-blue-600">${escapeHtml(bName)}</td>
+                            <td class="p-2">${escapeHtml(l.patientName)}<br><span class="text-xs text-gray-500">${escapeHtml(l.empId)}</span></td>
+                            <td class="p-2">${escapeHtml(l.gender || '-')}</td>
+                            <td class="p-2">${escapeHtml(l.symptom)}</td>
+                        </tr>
+                    `;
+                }).join('');
             }
             updateAdminChart(logs);
         }
 
         function updateAdminChart(completedLogs) {
-            const ctx = document.getElementById('adminChart');
-            if (!ctx) return;
-
-            const counts = {};
+            // 1. Chart: จำนวนผู้ป่วยแยกตามสาขา
+            const branchCounts = {};
             completedLogs.forEach(log => {
-                counts[log.branchId] = (counts[log.branchId] || 0) + 1;
+                branchCounts[log.branchId] = (branchCounts[log.branchId] || 0) + 1;
             });
+            const bLabels = branchesList.map(b => b.name);
+            const bData = branchesList.map(b => branchCounts[b.id] || 0);
 
-            const labels = [];
-            const data = [];
-            branchesList.forEach(b => {
-                labels.push(b.name);
-                data.push(counts[b.id] || 0);
-            });
-
-            if (window.adminChartInstance) {
-                window.adminChartInstance.destroy();
+            if (window.adminBranchChartInst) window.adminBranchChartInst.destroy();
+            const ctxBranch = document.getElementById('adminBranchChart');
+            if (ctxBranch) {
+                window.adminBranchChartInst = new Chart(ctxBranch, {
+                    type: 'bar',
+                    data: { labels: bLabels, datasets: [{ label: 'จำนวน (คน)', data: bData, backgroundColor: '#3b82f6', borderRadius: 4 }] },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { title: { display: true, text: 'ผู้ป่วยแยกตามสาขา' }, legend: { display: false } } }
+                });
             }
 
-            window.adminChartInstance = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'จำนวนผู้เข้าใช้บริการ (คน)',
-                        data: data,
-                        backgroundColor: '#3b82f6',
-                        borderRadius: 6
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: { 
-                        y: { beginAtZero: true, ticks: { stepSize: 1, precision: 0 } } 
-                    },
-                    plugins: { legend: { display: false } }
-                }
+            // 2. Chart: สัดส่วนเพศ
+            const genderCounts = { 'ชาย': 0, 'หญิง': 0, 'อื่นๆ': 0 };
+            completedLogs.forEach(log => { 
+                if(genderCounts[log.gender] !== undefined) genderCounts[log.gender]++; 
+                else genderCounts['อื่นๆ']++; 
             });
+            if (window.adminGenderChartInst) window.adminGenderChartInst.destroy();
+            const ctxGender = document.getElementById('adminGenderChart');
+            if (ctxGender) {
+                window.adminGenderChartInst = new Chart(ctxGender, {
+                    type: 'doughnut',
+                    data: { labels: ['ชาย', 'หญิง', 'อื่นๆ'], datasets: [{ data: [genderCounts['ชาย'], genderCounts['หญิง'], genderCounts['อื่นๆ']], backgroundColor: ['#3b82f6', '#ec4899', '#94a3b8'] }] },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { title: { display: true, text: 'สัดส่วนเพศผู้เข้าใช้บริการ' } } }
+                });
+            }
+
+            // 3. Chart: Top 5 อาการ
+            const sympCounts = {};
+            completedLogs.forEach(log => {
+                const s = log.symptom || 'ไม่ระบุ';
+                sympCounts[s] = (sympCounts[s] || 0) + 1;
+            });
+            const sortedSymps = Object.entries(sympCounts).sort((a, b) => b[1] - a[1]).slice(0, 5);
+            const sLabels = sortedSymps.map(s => s[0]);
+            const sData = sortedSymps.map(s => s[1]);
+            
+            if (window.adminSymptomChartInst) window.adminSymptomChartInst.destroy();
+            const ctxSymp = document.getElementById('adminSymptomChart');
+            if (ctxSymp) {
+                window.adminSymptomChartInst = new Chart(ctxSymp, {
+                    type: 'bar',
+                    data: { labels: sLabels, datasets: [{ label: 'จำนวน (คน)', data: sData, backgroundColor: '#f59e0b', borderRadius: 4 }] },
+                    options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { title: { display: true, text: 'Top 5 อาการเจ็บป่วย' }, legend: { display: false } } }
+                });
+            }
         }
 
         function openEditBranchModal(id, name) {
@@ -1307,7 +1346,40 @@
         }
         
         function escapeHtml(str) { return str.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m])); }
-        function exportAdminLogsToCSV() { /* Logic for CSV */ }
+        
+        function exportAdminLogsToCSV() {
+            if (!adminLogsData || adminLogsData.length === 0) {
+                showGlobalMsg('แจ้งเตือน', 'ไม่มีข้อมูลสำหรับดาวน์โหลด');
+                return;
+            }
+            
+            let csvContent = "\uFEFF"; // UTF-8 BOM ทำให้เปิดใน Excel ภาษาไทยไม่เพี้ยน
+            csvContent += "วันที่,เวลา,สาขา,รหัสพนักงาน,ชื่อ-นามสกุล,เพศ,อาการ,สถานะการพัก\n";
+            
+            adminLogsData.forEach(log => {
+                const bName = branchesList.find(b => b.id === log.branchId)?.name || 'ไม่พบสาขา';
+                const row = [
+                    `"${log.date || ''}"`,
+                    `"${log.time || ''}"`,
+                    `"${bName}"`,
+                    `"${log.empId || ''}"`,
+                    `"${log.patientName || ''}"`,
+                    `"${log.gender || '-'}"`,
+                    `"${log.symptom || ''}"`,
+                    `"${log.needRest ? 'นอนพัก' : 'ไม่นอนพัก'}"`
+                ].join(',');
+                csvContent += row + "\n";
+            });
+            
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.href = url;
+            link.download = `รายงานห้องพยาบาล_${new Date().toISOString().split('T')[0]}.csv`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
 
     </script>
 </body>
