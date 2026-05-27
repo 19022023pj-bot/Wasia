@@ -526,7 +526,17 @@
             </div>
         </section>
 
-        <section id="view-adminLogin" class="view-section flex-col items-center py-12 px-4 w-full max-w-md mx-auto">
+    </main>
+
+    <footer class="py-4 text-center text-xs text-gray-400 mt-auto bg-white border-t">
+        © 2026 Smart Infirmary System. All rights reserved.
+    </footer>
+
+    <!-- Global Modal for Messages -->
+    <div id="global-msg-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 hidden-element">
+        <div class="bg-white rounded-2xl p-6 max-w-sm w-full text-center shadow-2xl">
+            <h3 id="global-msg-title" class="text-xl font-bold text-gray-900 mb-2">Message</h3>
+            <p id="global-msg-desc" class="text-gray-600 mb-6">Description goes here.</p>
             <button onclick="closeGlobalMsg()" class="w-full bg-gray-800 hover:bg-gray-900 text-white font-bold py-3 rounded-xl transition-all">
                 ตกลง
             </button>
@@ -588,7 +598,7 @@
             <p id="confirm-modal-desc" class="text-gray-600 mb-6">คุณแน่ใจหรือไม่ว่าต้องการลบข้อมูลนี้ ไม่สามารถกู้คืนได้</p>
             <div class="flex gap-3">
                 <button onclick="closeConfirmModal()" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold py-3 rounded-xl transition-all">ยกเลิก</button>
-                <button id="btn-confirm-action" class="flex-1 bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-xl transition-all">ยืนยัน</button>
+                <button id="btn-confirm-action" onclick="executeConfirmAction()" class="flex-1 bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-xl transition-all">ยืนยัน</button>
             </div>
         </div>
     </div>
@@ -649,7 +659,6 @@
         window.acknowledgeQueue = acknowledgeQueue;
         window.logoutNurse = logoutNurse;
         window.logoutAdmin = logoutAdmin;
-        window.deleteBranch = deleteBranch;
         window.completeQueue = completeQueue;
         window.callPatient = callPatient;
         window.fetchAdminLogs = fetchAdminLogs;
@@ -660,13 +669,15 @@
         window.openEditBranchModal = openEditBranchModal;
         window.closeEditBranchModal = closeEditBranchModal;
         window.approveNurse = approveNurse;
-        window.deleteNurse = deleteNurse;
         window.openEditNurseModal = openEditNurseModal;
         window.closeEditNurseModal = closeEditNurseModal;
-        window.confirmDeleteNurse = confirmDeleteNurse;
+        
+        // --- Confirm Modals ---
         window.closeConfirmModal = closeConfirmModal;
+        window.confirmDeleteNurse = confirmDeleteNurse;
         window.confirmCancelQueue = confirmCancelQueue;
         window.confirmDeleteHistory = confirmDeleteHistory;
+        window.confirmDeleteBranch = confirmDeleteBranch;
 
         lucide.createIcons();
 
@@ -824,7 +835,7 @@
                         <span class="font-medium text-gray-700">${escapeHtml(b.name)}</span>
                         <div class="flex gap-2">
                             <button onclick="openEditBranchModal('${b.id}', '${escapeHtml(b.name.replace(/'/g, "\\'"))}')" class="text-blue-600 hover:text-blue-800 text-sm bg-blue-50 px-3 py-1 rounded-md transition-colors">แก้ไข</button>
-                            <button onclick="deleteBranch('${b.id}')" class="text-red-500 hover:text-red-700 text-sm bg-red-50 px-3 py-1 rounded-md transition-colors">ลบ</button>
+                            <button onclick="confirmDeleteBranch('${b.id}')" class="text-red-500 hover:text-red-700 text-sm bg-red-50 px-3 py-1 rounded-md transition-colors">ลบ</button>
                         </div>
                     </li>
                 `).join('');
@@ -872,6 +883,9 @@
             }
         }
 
+        // ==========================================
+        // Firebase Core Actions
+        // ==========================================
         async function approveNurse(id) {
             if (!currentUser) return;
             await updateDoc(doc(db, nursesPath, id), { approvalStatus: 'approved' });
@@ -882,6 +896,9 @@
             await deleteDoc(doc(db, nursesPath, id));
         }
 
+        // ==========================================
+        // Safe Confirm Modal Logic (ป้องกันการกดผิดพลาด)
+        // ==========================================
         let confirmActionCallback = null;
 
         function openConfirmModal(title, desc, actionCallback) {
@@ -896,15 +913,30 @@
             document.getElementById('confirm-modal').classList.add('hidden-element');
         }
 
-        document.getElementById('btn-confirm-action').addEventListener('click', async () => {
+        // Global function สำหรับปุ่ม "ยืนยัน" ใน Modal
+        window.executeConfirmAction = async () => {
             if (confirmActionCallback) {
-                await confirmActionCallback();
+                const btn = document.getElementById('btn-confirm-action');
+                const origText = btn.innerText;
+                btn.innerText = 'กำลังดำเนินการ...';
+                btn.disabled = true;
+                
+                try {
+                    await confirmActionCallback();
+                } catch (err) {
+                    console.error("Delete Error:", err);
+                    showGlobalMsg('ข้อผิดพลาด', 'ไม่สามารถทำรายการได้ในขณะนี้');
+                } finally {
+                    btn.innerText = origText;
+                    btn.disabled = false;
+                    closeConfirmModal();
+                }
             }
-            closeConfirmModal();
-        });
+        };
 
+        // --- Wrapper Functions เพื่อเรียกใช้ Modal ---
         function confirmDeleteNurse(id) {
-            openConfirmModal('ยืนยันการลบพยาบาล?', 'หากลบแล้วจะไม่สามารถเข้าใช้งานได้อีก', async () => {
+            openConfirmModal('ยืนยันการลบพยาบาล?', 'หากลบแล้วบัญชีนี้จะไม่สามารถเข้าใช้งานได้อีก', async () => {
                 await deleteNurse(id);
             });
         }
@@ -918,8 +950,16 @@
         function confirmDeleteHistory(id) {
             openConfirmModal('ยืนยันการลบประวัติ?', 'ประวัติการเข้าใช้บริการนี้จะถูกลบออกจากระบบอย่างถาวร', async () => {
                 await deleteDoc(doc(db, queuesPath, id));
+                await fetchAdminLogs(); // สั่งให้ดึงข้อมูลใหม่ เพื่ออัปเดตตารางและกราฟทันที
             });
         }
+
+        function confirmDeleteBranch(id) {
+            openConfirmModal('ยืนยันการลบสาขา?', 'ระวัง! สาขานี้จะถูกลบออกจากระบบ', async () => {
+                await deleteDoc(doc(db, branchesPath, id));
+            });
+        }
+        // ==========================================
 
         function openEditNurseModal(id) {
             const nurse = nursesList.find(n => n.id === id);
@@ -998,7 +1038,6 @@
                 e.preventDefault();
                 const name = document.getElementById('reg-nurse-name').value.trim();
                 const branchId = document.getElementById('reg-nurse-branch').value;
-                // ปรับให้ Username เป็นตัวพิมพ์เล็กทั้งหมด เพื่อป้องกันปัญหามือถือ Auto-capitalization
                 const username = document.getElementById('reg-nurse-user').value.trim().toLowerCase();
                 const password = document.getElementById('reg-nurse-pass').value.trim();
 
@@ -1022,15 +1061,12 @@
             document.getElementById('nurse-login-form').addEventListener('submit', async (e) => {
                 e.preventDefault();
                 try {
-                    // ปรับให้ Username เป็นตัวพิมพ์เล็กทั้งหมดตอนค้นหา
                     const user = document.getElementById('nurse-login-user').value.trim().toLowerCase();
                     const pass = document.getElementById('nurse-login-pass').value.trim();
 
-                    // เทียบข้อมูลค้นหาพยาบาล
                     const nurse = nursesList.find(n => (n.username || '').trim().toLowerCase() === user && (n.password || '').trim() === pass);
 
                     if (!nurse) {
-                        // เช็คแยกเพื่อให้รู้ว่าผิดที่ Username หรือ Password
                         const userExists = nursesList.find(n => (n.username || '').trim().toLowerCase() === user);
                         if (userExists) {
                             showGlobalMsg('เข้าสู่ระบบล้มเหลว', 'รหัสผ่าน (Password) ไม่ถูกต้อง');
@@ -1097,7 +1133,6 @@
                 const username = document.getElementById('edit-nurse-username').value.trim().toLowerCase();
                 const password = document.getElementById('edit-nurse-password').value.trim();
                 
-                // ตรวจสอบว่า Username ซ้ำกับคนอื่นหรือไม่
                 if (nursesList.some(n => (n.username || '').trim().toLowerCase() === username && n.id !== id)) {
                     showGlobalMsg('ข้อผิดพลาด', 'Username นี้ถูกใช้งานแล้ว กรุณาใช้ชื่ออื่น');
                     return;
@@ -1304,7 +1339,6 @@
             switchView('view-landing'); 
         }
         
-        async function deleteBranch(id) { await deleteDoc(doc(db, branchesPath, id)); }
         function logoutAdmin() { switchView('view-landing'); }
 
         async function fetchAdminLogs() {
@@ -1401,7 +1435,6 @@
             document.getElementById('branch-edit-modal').classList.add('hidden-element');
         }
         
-        // แก้ไขบัคตอนแสดงผลชื่อที่อาจทำให้โค้ดพังได้
         function escapeHtml(str) { 
             if (str === null || str === undefined) return '';
             return String(str).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m])); 
