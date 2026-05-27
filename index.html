@@ -998,12 +998,13 @@
                 e.preventDefault();
                 const name = document.getElementById('reg-nurse-name').value.trim();
                 const branchId = document.getElementById('reg-nurse-branch').value;
-                const username = document.getElementById('reg-nurse-user').value.trim();
+                // ปรับให้ Username เป็นตัวพิมพ์เล็กทั้งหมด เพื่อป้องกันปัญหามือถือ Auto-capitalization
+                const username = document.getElementById('reg-nurse-user').value.trim().toLowerCase();
                 const password = document.getElementById('reg-nurse-pass').value.trim();
 
-                // Check if username exists (ตัดช่องว่างออกเพื่อเทียบความซ้ำซ้อนให้แม่นยำ)
-                if (nursesList.some(n => (n.username || '').trim() === username)) {
-                    showGlobalMsg('Error', 'Username นี้ถูกใช้งานแล้ว กรุณาใช้ชื่ออื่น');
+                // Check if username exists
+                if (nursesList.some(n => (n.username || '').trim().toLowerCase() === username)) {
+                    showGlobalMsg('ข้อผิดพลาด', 'Username นี้ถูกใช้งานแล้ว กรุณาใช้ชื่ออื่น');
                     return;
                 }
 
@@ -1013,7 +1014,7 @@
                 });
 
                 document.getElementById('nurse-register-form').reset();
-                showGlobalMsg('สำเร็จ', 'ส่งคำขอสมัครสำเร็จ กรุณารอแอดมินอนุมัติ');
+                showGlobalMsg('สำเร็จ', 'ส่งคำขอสมัครสำเร็จ กรุณาแจ้งแอดมินให้อนุมัติก่อนเข้าใช้งาน');
                 switchView('view-nurseLogin');
             });
 
@@ -1021,18 +1022,25 @@
             document.getElementById('nurse-login-form').addEventListener('submit', async (e) => {
                 e.preventDefault();
                 try {
-                    const user = document.getElementById('nurse-login-user').value.trim();
+                    // ปรับให้ Username เป็นตัวพิมพ์เล็กทั้งหมดตอนค้นหา
+                    const user = document.getElementById('nurse-login-user').value.trim().toLowerCase();
                     const pass = document.getElementById('nurse-login-pass').value.trim();
 
-                    // เทียบข้อมูลโดยตัดช่องว่าง (รองรับข้อมูลเดิมใน DB ที่อาจเผลอเว้นวรรคไว้)
-                    const nurse = nursesList.find(n => (n.username || '').trim() === user && (n.password || '').trim() === pass);
+                    // เทียบข้อมูลค้นหาพยาบาล
+                    const nurse = nursesList.find(n => (n.username || '').trim().toLowerCase() === user && (n.password || '').trim() === pass);
 
                     if (!nurse) {
-                        showGlobalMsg('เข้าสู่ระบบล้มเหลว', 'Username หรือ Password ไม่ถูกต้อง');
+                        // เช็คแยกเพื่อให้รู้ว่าผิดที่ Username หรือ Password
+                        const userExists = nursesList.find(n => (n.username || '').trim().toLowerCase() === user);
+                        if (userExists) {
+                            showGlobalMsg('เข้าสู่ระบบล้มเหลว', 'รหัสผ่าน (Password) ไม่ถูกต้อง');
+                        } else {
+                            showGlobalMsg('เข้าสู่ระบบล้มเหลว', 'ไม่พบชื่อผู้ใช้ (Username) นี้ในระบบ');
+                        }
                         return;
                     }
                     if (nurse.approvalStatus !== 'approved') {
-                        showGlobalMsg('รอการอนุมัติ', 'ไอดีของคุณกำลังรอการอนุมัติจากแอดมิน ไม่สามารถเข้าใช้งานได้');
+                        showGlobalMsg('รอการอนุมัติ', 'ไอดีของคุณกำลังรอการอนุมัติ กรุณาแจ้งแอดมินให้เข้าสู่ระบบเพื่อกด "อนุมัติ" ให้คุณก่อนเข้าใช้งาน');
                         return;
                     }
 
@@ -1086,11 +1094,11 @@
                 
                 const name = document.getElementById('edit-nurse-name').value.trim();
                 const branchId = document.getElementById('edit-nurse-branch').value;
-                const username = document.getElementById('edit-nurse-username').value.trim();
+                const username = document.getElementById('edit-nurse-username').value.trim().toLowerCase();
                 const password = document.getElementById('edit-nurse-password').value.trim();
                 
                 // ตรวจสอบว่า Username ซ้ำกับคนอื่นหรือไม่
-                if (nursesList.some(n => (n.username || '').trim() === username && n.id !== id)) {
+                if (nursesList.some(n => (n.username || '').trim().toLowerCase() === username && n.id !== id)) {
                     showGlobalMsg('ข้อผิดพลาด', 'Username นี้ถูกใช้งานแล้ว กรุณาใช้ชื่ออื่น');
                     return;
                 }
