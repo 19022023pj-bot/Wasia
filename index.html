@@ -1194,20 +1194,48 @@
             
             document.getElementById('nd-active-list').innerHTML = activeQueues.map(q => `
                 <div class="bg-white p-4 shadow rounded-lg border-l-4 border-blue-500 relative">
-                    <div class="font-bold text-gray-800">${escapeHtml(q.patientName)}</div>
-                    <div class="text-sm text-gray-600">${q.status === 'acknowledged' ? 'กำลังตรวจ' : 'รอรับการตรวจ'}</div>
-                    <div class="flex gap-2 mt-3">
+                    <div class="font-bold text-gray-800 flex items-center gap-2">
+                        ${escapeHtml(q.patientName)} 
+                        <span class="text-xs font-normal bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">${escapeHtml(q.gender || '-')}</span>
+                    </div>
+                    <div class="text-sm text-red-600 font-medium mt-1 flex items-start gap-1">
+                        <i data-lucide="stethoscope" class="w-4 h-4 mt-0.5 shrink-0"></i> 
+                        <span>อาการ: ${escapeHtml(q.symptom)}</span>
+                    </div>
+                    <div class="text-sm text-gray-600 mt-2 flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full ${q.status === 'acknowledged' ? 'bg-green-500' : 'bg-yellow-500 animate-pulse'}"></span>
+                        ${q.status === 'acknowledged' ? 'กำลังตรวจ' : 'รอผู้ป่วยยืนยันรับคิว'}
+                        ${q.needRest ? '<span class="text-xs ml-auto bg-purple-100 text-purple-700 px-2 py-0.5 rounded">ต้องการนอนพัก</span>' : ''}
+                    </div>
+                    <div class="flex gap-2 mt-4">
                         ${q.status === 'acknowledged' ? `<button onclick="completeQueue('${q.id}')" class="flex-1 bg-blue-600 hover:bg-blue-700 transition-colors text-white rounded py-2 font-medium shadow">ตรวจเสร็จสิ้น</button>` : ''}
                         <button onclick="confirmCancelQueue('${q.id}')" class="flex-1 bg-red-50 text-red-600 hover:bg-red-100 transition-colors rounded py-2 font-medium border border-red-100">ยกเลิกคิว</button>
                     </div>
                 </div>`).join('');
                 
             document.getElementById('nd-waiting-list').innerHTML = waitingQueues.map((q, i) => `
-                <li class="p-4 flex flex-col sm:flex-row sm:justify-between sm:items-center border-b gap-3">
-                    <div><b class="text-gray-800">${escapeHtml(q.patientName)}</b> <span class="text-xs text-gray-500 ml-2">A${q.id.substring(0,3).toUpperCase()}</span></div>
-                    <div class="flex gap-2 w-full sm:w-auto">
-                        <button onclick="callPatient('${q.id}')" class="flex-1 sm:flex-none bg-blue-600 hover:bg-blue-700 transition-colors shadow text-white px-4 py-2 rounded-lg text-sm font-medium">เรียกคิว</button>
-                        <button onclick="confirmCancelQueue('${q.id}')" class="flex-1 sm:flex-none bg-red-50 text-red-600 hover:bg-red-100 transition-colors shadow-sm border border-red-100 px-3 py-2 rounded-lg text-sm font-medium">ยกเลิก</button>
+                <li class="p-4 flex flex-col sm:flex-row sm:justify-between sm:items-start border-b gap-3 hover:bg-gray-50 transition-colors">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <b class="text-gray-800 text-lg">${escapeHtml(q.patientName)}</b> 
+                            <span class="bg-gray-200 text-gray-700 px-2 py-0.5 rounded text-xs font-bold shadow-sm">A${q.id.substring(0,3).toUpperCase()}</span>
+                        </div>
+                        <div class="text-sm text-red-600 mt-1.5 flex items-start gap-1.5 font-medium bg-red-50 inline-block px-2 py-1 rounded">
+                            <i data-lucide="alert-circle" class="w-4 h-4 mt-0.5 inline-block shrink-0"></i> 
+                            อาการ: ${escapeHtml(q.symptom)}
+                        </div>
+                        <div class="text-xs text-gray-500 mt-1 flex gap-2">
+                            <span>เพศ: ${escapeHtml(q.gender || '-')}</span> | 
+                            <span>รหัส: ${escapeHtml(q.empId)}</span>
+                        </div>
+                    </div>
+                    <div class="flex gap-2 w-full sm:w-auto mt-2 sm:mt-0 shrink-0">
+                        <button onclick="callPatient('${q.id}')" class="flex-1 sm:flex-none bg-blue-600 hover:bg-blue-700 transition-colors shadow-md text-white px-5 py-2.5 rounded-lg text-sm font-bold flex items-center justify-center gap-1">
+                            <i data-lucide="megaphone" class="w-4 h-4"></i> เรียกคิว
+                        </button>
+                        <button onclick="confirmCancelQueue('${q.id}')" class="flex-1 sm:flex-none bg-white text-red-600 hover:bg-red-50 transition-colors shadow-sm border border-gray-200 px-3 py-2.5 rounded-lg text-sm font-medium">
+                            <i data-lucide="x" class="w-4 h-4"></i>
+                        </button>
                     </div>
                 </li>`).join('');
             lucide.createIcons();
