@@ -497,6 +497,7 @@
                                     <th class="p-2 text-gray-600 font-medium">ชื่อ/รหัส</th>
                                     <th class="p-2 text-gray-600 font-medium">เพศ</th>
                                     <th class="p-2 text-gray-600 font-medium">อาการ</th>
+                                    <th class="p-2 text-gray-600 font-medium text-right">จัดการ</th>
                                 </tr>
                             </thead>
                             <tbody id="admin-log-list" class="divide-y divide-gray-100">
@@ -1582,7 +1583,15 @@
         async function fetchAdminLogs() {
             const snapshot = await getDocs(collection(db, queuesPath));
             const logs = snapshot.docs.map(d => ({id: d.id, ...d.data()})).filter(d => d.status === 'completed');
-            adminLogsData = logs;
+            
+            // เรียงลำดับประวัติจากล่าสุดไปเก่าสุด
+            logs.sort((a, b) => {
+                const t1 = a.createdAt ? a.createdAt.seconds : 0;
+                const t2 = b.createdAt ? b.createdAt.seconds : 0;
+                return t2 - t1;
+            });
+
+            adminLogsData = logs; // บันทึกข้อมูลลงตัวแปร Global สำหรับ Export
             const container = document.getElementById('admin-log-list');
             const empty = document.getElementById('admin-log-empty');
             
@@ -1595,12 +1604,15 @@
                     container.innerHTML = logs.map(l => {
                         const bName = branchesList.find(b => b.id === l.branchId)?.name || 'ไม่พบสาขา';
                         return `
-                            <tr>
+                            <tr class="hover:bg-gray-50 border-b border-gray-50">
                                 <td class="p-2">${l.date || ''}</td>
                                 <td class="p-2 text-blue-600">${escapeHtml(bName)}</td>
                                 <td class="p-2">${escapeHtml(l.patientName)}<br><span class="text-xs text-gray-500">${escapeHtml(l.empId)}</span></td>
                                 <td class="p-2">${escapeHtml(l.gender || '-')}</td>
                                 <td class="p-2">${escapeHtml(l.symptom)}</td>
+                                <td class="p-2 text-right">
+                                    <button onclick="confirmDeleteHistory('${l.id}')" class="text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 px-2 py-1 rounded text-xs transition-colors">ลบ</button>
+                                </td>
                             </tr>
                         `;
                     }).join('');
