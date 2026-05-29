@@ -71,22 +71,16 @@
                 </div>
                 <div>
                     <h2 class="text-2xl font-bold text-gray-800">ระบบคิวห้องพยาบาล</h2>
-                    <p class="text-gray-500 mt-2">กรุณาเลือกสาขาของท่านเพื่อเข้าสู่ระบบ</p>
+                    <p class="text-gray-500 mt-2">กรุณาระบุรหัสพนักงานเพื่อเข้าสู่ระบบ</p>
                 </div>
                 
                 <div class="text-left w-full mt-4">
-                    <label class="block text-sm font-medium text-gray-700 mb-1">สาขาที่สังกัด (Branch)</label>
-                    <select id="landing-branch-select" class="w-full border-gray-300 rounded-lg shadow-sm p-3 border focus:ring-red-500 focus:border-red-500 outline-none">
-                        <option value="">-- กำลังโหลดข้อมูลสาขา --</option>
-                    </select>
-                    <!-- Nurse Online Status Display -->
-                    <div id="landing-nurse-status-container" class="mt-3 text-center h-6 transition-all">
-                        <!-- Injected by JS -->
-                    </div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">รหัสพนักงาน (Employee ID)</label>
+                    <input id="login-emp-id" type="text" class="w-full border-gray-300 rounded-lg shadow-sm p-3 border focus:ring-red-500 focus:border-red-500 outline-none" placeholder="เช่น 6400123">
                 </div>
 
-                <button id="btn-goto-form" class="w-full py-4 rounded-xl font-bold text-lg text-white shadow-md transition-all bg-gray-300 cursor-not-allowed" disabled>
-                    จองคิวเข้าห้องพยาบาล
+                <button id="btn-login-patient" class="w-full py-4 rounded-xl font-bold text-lg text-white shadow-md transition-all bg-red-600 hover:bg-red-700">
+                    เข้าสู่ระบบ / จองคิว
                 </button>
             </div>
 
@@ -120,24 +114,13 @@
                 </div>
                 
                 <form id="patient-form" class="p-6 space-y-5">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">ชื่อ - นามสกุล</label>
-                        <input required id="p-name" type="text" class="w-full border-gray-300 rounded-lg shadow-sm p-3 border focus:ring-red-500 focus:border-red-500 outline-none" placeholder="ระบุชื่อ-นามสกุล">
-                    </div>
                     
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">รหัสพนักงาน</label>
-                        <input required id="p-empId" type="text" class="w-full border-gray-300 rounded-lg shadow-sm p-3 border focus:ring-red-500 focus:border-red-500 outline-none" placeholder="เช่น 6400123">
-                    </div>
-
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">เพศ</label>
-                        <select required id="p-gender" class="w-full border-gray-300 rounded-lg shadow-sm p-3 border focus:ring-red-500 focus:border-red-500 outline-none">
-                            <option value="">-- เลือกเพศ --</option>
-                            <option value="ชาย">ชาย</option>
-                            <option value="หญิง">หญิง</option>
-                            <option value="อื่นๆ">อื่นๆ/ไม่ระบุ</option>
-                        </select>
+                    <!-- Read-only Employee Info -->
+                    <div class="bg-gray-50 p-4 rounded-xl border border-gray-200 text-sm space-y-3">
+                        <div class="flex justify-between items-center border-b pb-2"><span class="text-gray-500">รหัสพนักงาน:</span> <span id="disp-p-empId" class="font-bold text-gray-800 text-lg"></span></div>
+                        <div class="flex justify-between items-center"><span class="text-gray-500">ชื่อ-นามสกุล:</span> <span id="disp-p-name" class="font-medium text-gray-800"></span></div>
+                        <div class="flex justify-between items-center"><span class="text-gray-500">เพศ:</span> <span id="disp-p-gender" class="font-medium text-gray-800"></span></div>
+                        <div class="flex justify-between items-center"><span class="text-gray-500">สาขา:</span> <span id="disp-p-branch" class="font-medium text-red-600 font-bold"></span></div>
                     </div>
 
                     <div>
@@ -449,6 +432,24 @@
                     </div>
                 </div>
 
+                <!-- Employee Management (NEW) -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 flex flex-col max-h-96">
+                    <h3 class="font-bold text-lg text-gray-700 mb-4 flex items-center gap-2 shrink-0">
+                        <i data-lucide="file-spreadsheet" class="w-5 h-5"></i> นำเข้าข้อมูลพนักงาน (CSV)
+                    </h3>
+                    <p class="text-xs text-gray-500 mb-3">รูปแบบไฟล์ CSV: รหัสพนักงาน, ชื่อ-นามสกุล, เพศ</p>
+                    <form id="upload-emp-form" class="flex flex-col gap-3">
+                        <select required id="upload-emp-branch" class="w-full border-gray-300 rounded-lg p-2 border focus:ring-blue-500 outline-none">
+                            <option value="">-- เลือกสาขาที่พนักงานสังกัด --</option>
+                        </select>
+                        <input type="file" id="upload-emp-file" accept=".csv" class="w-full text-sm border-gray-300 rounded-lg border p-1" required />
+                        <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 font-bold flex items-center justify-center gap-2 transition-all">
+                            <i data-lucide="upload" class="w-4 h-4"></i> อัปโหลดข้อมูลพนักงาน
+                        </button>
+                    </form>
+                    <div id="upload-emp-status" class="mt-3 text-sm text-green-600 hidden-element font-medium text-center"></div>
+                </div>
+
                 <!-- Nurse Management -->
                 <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 flex flex-col max-h-96">
                     <h3 class="font-bold text-lg text-gray-700 mb-4 flex items-center gap-2 shrink-0">
@@ -606,7 +607,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, addDoc, updateDoc, deleteDoc, onSnapshot, collection, getDocs, serverTimestamp, query, where } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, setDoc, getDoc, addDoc, updateDoc, deleteDoc, onSnapshot, collection, getDocs, serverTimestamp, query, where } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // ==========================================
         // Firebase Configuration
@@ -632,6 +633,7 @@
         const branchesPath = `artifacts/${appId}/public/data/branches`;
         const queuesPath = `artifacts/${appId}/public/data/queues`;
         const nursesPath = `artifacts/${appId}/public/data/nurses`;
+        const employeesPath = `artifacts/${appId}/public/data/employees`;
 
         // Global State
         let currentUser = null;
@@ -652,8 +654,14 @@
         let nurseBranchId = '';
         let currentNurseName = '';
         
+        let currentPatientEmpId = '';
+        let currentPatientData = null;
+        
         let adminLogsData = []; // Store logs globally for CSV Export
 
+        // ==========================================
+        // Expose Functions to Window (For HTML onclick)
+        // ==========================================
         window.switchView = switchView;
         window.leaveQueue = leaveQueue;
         window.acknowledgeQueue = acknowledgeQueue;
@@ -672,15 +680,19 @@
         window.openEditNurseModal = openEditNurseModal;
         window.closeEditNurseModal = closeEditNurseModal;
         
-        // --- Confirm Modals ---
+        // Confirm Modals
         window.closeConfirmModal = closeConfirmModal;
         window.confirmDeleteNurse = confirmDeleteNurse;
         window.confirmCancelQueue = confirmCancelQueue;
         window.confirmDeleteHistory = confirmDeleteHistory;
         window.confirmDeleteBranch = confirmDeleteBranch;
-
+        
+        // Initial Icon render
         lucide.createIcons();
 
+        // ==========================================
+        // Init Auth & Listeners
+        // ==========================================
         async function initAuth() {
             try {
                 if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
@@ -702,15 +714,19 @@
         });
 
         initAuth();
+        
+        // Must call initUI after dom is ready or at end of script
         initUI();
 
-        // Manage Online status on window close
         window.addEventListener('beforeunload', () => {
             if (currentNurseDocId && currentUser) {
                 updateDoc(doc(db, nursesPath, currentNurseDocId), { isOnline: false }).catch(()=>{});
             }
         });
 
+        // ==========================================
+        // View Controller
+        // ==========================================
         function switchView(viewId) {
             document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
             const target = document.getElementById(viewId);
@@ -718,18 +734,26 @@
             
             if (viewId === 'view-patientForm') {
                 const bName = branchesList.find(b => b.id === selectedBranchId)?.name || '';
-                document.getElementById('form-branch-name').innerText = bName;
+                const formBranchEl = document.getElementById('form-branch-name');
+                if(formBranchEl) formBranchEl.innerText = bName;
+                
+                const dateEl = document.getElementById('p-date');
+                const timeEl = document.getElementById('p-time');
                 const now = new Date();
-                document.getElementById('p-date').value = now.toISOString().split('T')[0];
-                document.getElementById('p-time').value = now.toTimeString().substring(0,5);
+                if(dateEl) dateEl.value = now.toISOString().split('T')[0];
+                if(timeEl) timeEl.value = now.toTimeString().substring(0,5);
             }
             else if (viewId === 'view-nurseDashboard') {
                 const bName = branchesList.find(b => b.id === nurseBranchId)?.name || '';
-                document.getElementById('nd-branch-name').innerText = bName;
-                document.getElementById('nd-nurse-name').innerHTML = `
-                    <span class="relative flex h-2.5 w-2.5 mr-1"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span><span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500"></span></span>
-                    ${escapeHtml(currentNurseName)}
-                `;
+                const ndBranchEl = document.getElementById('nd-branch-name');
+                const ndNurseEl = document.getElementById('nd-nurse-name');
+                if(ndBranchEl) ndBranchEl.innerText = bName;
+                if(ndNurseEl) {
+                    ndNurseEl.innerHTML = `
+                        <span class="relative flex h-2.5 w-2.5 mr-1"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span><span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500"></span></span>
+                        ${escapeHtml(currentNurseName)}
+                    `;
+                }
                 startQueuesListener();
                 switchNurseTab('queue');
             }
@@ -742,7 +766,8 @@
                 unsubQueuesAll();
                 unsubQueuesAll = null;
             }
-            lucide.createIcons();
+            
+            setTimeout(() => { lucide.createIcons(); }, 10);
         }
 
         function showGlobalMsg(title, desc) {
@@ -769,6 +794,9 @@
             }
         }
 
+        // ==========================================
+        // Data Fetching & Rendering
+        // ==========================================
         function startBranchListener() {
             if (!currentUser) return;
             const branchesRef = collection(db, branchesPath);
@@ -787,7 +815,6 @@
             if (!currentUser) return;
             unsubNurses = onSnapshot(collection(db, nursesPath), (snapshot) => {
                 nursesList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                renderNurseStatusDisplay();
                 renderAdminNurses();
             });
         }
@@ -801,30 +828,15 @@
         function renderBranchSelects() {
             const optionsHTML = '<option value="">-- กรุณาเลือกสาขา --</option>' + 
                 branchesList.map(b => `<option value="${b.id}">${b.name}</option>`).join('');
-            document.getElementById('landing-branch-select').innerHTML = optionsHTML;
-            document.getElementById('reg-nurse-branch').innerHTML = optionsHTML;
+            
+            const rnBranch = document.getElementById('reg-nurse-branch');
+            if (rnBranch) rnBranch.innerHTML = optionsHTML;
             
             const editNurseBranch = document.getElementById('edit-nurse-branch');
             if(editNurseBranch) editNurseBranch.innerHTML = optionsHTML;
-            
-            checkLandingBtn();
-        }
 
-        function renderNurseStatusDisplay() {
-            const container = document.getElementById('landing-nurse-status-container');
-            if (!selectedBranchId) {
-                container.innerHTML = '';
-                return;
-            }
-            
-            const onlineNurses = nursesList.filter(n => n.branchId === selectedBranchId && n.isOnline === true && n.approvalStatus === 'approved');
-            
-            if (onlineNurses.length > 0) {
-                const names = onlineNurses.map(n => n.name).join(', ');
-                container.innerHTML = `<span class="text-green-600 font-medium text-sm flex items-center justify-center gap-1"><span class="relative flex h-3 w-3"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span><span class="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span></span> ออนไลน์: ${escapeHtml(names)}</span>`;
-            } else {
-                container.innerHTML = `<span class="text-gray-400 font-medium text-sm flex items-center justify-center gap-1"><span class="h-3 w-3 rounded-full bg-gray-300"></span> ออฟไลน์ (ไม่มีพยาบาลประจำการ)</span>`;
-            }
+            const uploadEmpBranch = document.getElementById('upload-emp-branch');
+            if(uploadEmpBranch) uploadEmpBranch.innerHTML = optionsHTML;
         }
 
         function renderAdminBranches() {
@@ -883,9 +895,6 @@
             }
         }
 
-        // ==========================================
-        // Firebase Core Actions
-        // ==========================================
         async function approveNurse(id) {
             if (!currentUser) return;
             await updateDoc(doc(db, nursesPath, id), { approvalStatus: 'approved' });
@@ -897,7 +906,7 @@
         }
 
         // ==========================================
-        // Safe Confirm Modal Logic (ป้องกันการกดผิดพลาด)
+        // Modal Confirmations
         // ==========================================
         let confirmActionCallback = null;
 
@@ -913,7 +922,6 @@
             document.getElementById('confirm-modal').classList.add('hidden-element');
         }
 
-        // Global function สำหรับปุ่ม "ยืนยัน" ใน Modal
         window.executeConfirmAction = async () => {
             if (confirmActionCallback) {
                 const btn = document.getElementById('btn-confirm-action');
@@ -934,7 +942,6 @@
             }
         };
 
-        // --- Wrapper Functions เพื่อเรียกใช้ Modal ---
         function confirmDeleteNurse(id) {
             openConfirmModal('ยืนยันการลบพยาบาล?', 'หากลบแล้วบัญชีนี้จะไม่สามารถเข้าใช้งานได้อีก', async () => {
                 await deleteNurse(id);
@@ -950,7 +957,7 @@
         function confirmDeleteHistory(id) {
             openConfirmModal('ยืนยันการลบประวัติ?', 'ประวัติการเข้าใช้บริการนี้จะถูกลบออกจากระบบอย่างถาวร', async () => {
                 await deleteDoc(doc(db, queuesPath, id));
-                await fetchAdminLogs(); // สั่งให้ดึงข้อมูลใหม่ เพื่ออัปเดตตารางและกราฟทันที
+                await fetchAdminLogs(); 
             });
         }
 
@@ -959,7 +966,6 @@
                 await deleteDoc(doc(db, branchesPath, id));
             });
         }
-        // ==========================================
 
         function openEditNurseModal(id) {
             const nurse = nursesList.find(n => n.id === id);
@@ -976,186 +982,405 @@
             document.getElementById('nurse-edit-modal').classList.add('hidden-element');
         }
 
-        function initUI() {
-            document.getElementById('landing-branch-select').addEventListener('change', (e) => {
-                selectedBranchId = e.target.value;
-                checkLandingBtn();
-                renderNurseStatusDisplay();
-            });
-
-            document.getElementById('btn-goto-form').addEventListener('click', () => {
-                if (selectedBranchId) switchView('view-patientForm');
-            });
-
-            document.getElementById('p-symptom').addEventListener('change', (e) => {
-                const otherContainer = document.getElementById('p-symptom-other-container');
-                if (e.target.value === 'อื่นๆ (ระบุ)') {
-                    otherContainer.classList.remove('hidden-element');
-                    document.getElementById('p-symptom-other').required = true;
-                } else {
-                    otherContainer.classList.add('hidden-element');
-                    document.getElementById('p-symptom-other').required = false;
-                }
-            });
-
-            // Patient Submit
-            document.getElementById('patient-form').addEventListener('submit', async (e) => {
-                e.preventDefault();
-                if (!selectedBranchId || !currentUser) return;
-                
-                const btn = document.getElementById('btn-submit-form');
-                btn.disabled = true;
-                try {
-                    const name = document.getElementById('p-name').value;
-                    const empId = document.getElementById('p-empId').value;
-                    const gender = document.getElementById('p-gender').value;
-                    const sympSelect = document.getElementById('p-symptom').value;
-                    const sympOther = document.getElementById('p-symptom-other').value;
-                    const finalSymptom = sympSelect === 'อื่นๆ (ระบุ)' ? sympOther : sympSelect;
-                    const needRest = document.querySelector('input[name="rest"]:checked').value === 'yes';
-                    const date = document.getElementById('p-date').value;
-                    const time = document.getElementById('p-time').value;
-
-                    const docRef = await addDoc(collection(db, queuesPath), {
-                        branchId: selectedBranchId, patientName: name, empId: empId, gender: gender,
-                        symptom: finalSymptom, needRest: needRest, status: 'waiting',
-                        createdAt: serverTimestamp(), date: date, time: time
-                    });
-                    
-                    myQueueId = docRef.id;
-                    document.getElementById('patient-form').reset();
-                    startMyQueueListener();
-                    switchView('view-patientQueue');
-                } catch (error) {
-                    showGlobalMsg('Error', 'ไม่สามารถบันทึกคิวได้');
-                } finally {
-                    btn.disabled = false;
-                }
-            });
-
-            // Nurse Register
-            document.getElementById('nurse-register-form').addEventListener('submit', async (e) => {
-                e.preventDefault();
-                const name = document.getElementById('reg-nurse-name').value.trim();
-                const branchId = document.getElementById('reg-nurse-branch').value;
-                const username = document.getElementById('reg-nurse-user').value.trim().toLowerCase();
-                const password = document.getElementById('reg-nurse-pass').value.trim();
-
-                // Check if username exists
-                if (nursesList.some(n => (n.username || '').trim().toLowerCase() === username)) {
-                    showGlobalMsg('ข้อผิดพลาด', 'Username นี้ถูกใช้งานแล้ว กรุณาใช้ชื่ออื่น');
-                    return;
-                }
-
-                await addDoc(collection(db, nursesPath), {
-                    name, branchId, username, password,
-                    approvalStatus: 'pending', isOnline: false, createdAt: serverTimestamp()
-                });
-
-                document.getElementById('nurse-register-form').reset();
-                showGlobalMsg('สำเร็จ', 'ส่งคำขอสมัครสำเร็จ กรุณาแจ้งแอดมินให้อนุมัติก่อนเข้าใช้งาน');
-                switchView('view-nurseLogin');
-            });
-
-            // Nurse Login
-            document.getElementById('nurse-login-form').addEventListener('submit', async (e) => {
-                e.preventDefault();
-                try {
-                    const user = document.getElementById('nurse-login-user').value.trim().toLowerCase();
-                    const pass = document.getElementById('nurse-login-pass').value.trim();
-
-                    const nurse = nursesList.find(n => (n.username || '').trim().toLowerCase() === user && (n.password || '').trim() === pass);
-
-                    if (!nurse) {
-                        const userExists = nursesList.find(n => (n.username || '').trim().toLowerCase() === user);
-                        if (userExists) {
-                            showGlobalMsg('เข้าสู่ระบบล้มเหลว', 'รหัสผ่าน (Password) ไม่ถูกต้อง');
-                        } else {
-                            showGlobalMsg('เข้าสู่ระบบล้มเหลว', 'ไม่พบชื่อผู้ใช้ (Username) นี้ในระบบ');
-                        }
-                        return;
-                    }
-                    if (nurse.approvalStatus !== 'approved') {
-                        showGlobalMsg('รอการอนุมัติ', 'ไอดีของคุณกำลังรอการอนุมัติ กรุณาแจ้งแอดมินให้เข้าสู่ระบบเพื่อกด "อนุมัติ" ให้คุณก่อนเข้าใช้งาน');
-                        return;
-                    }
-
-                    currentNurseDocId = nurse.id;
-                    nurseBranchId = nurse.branchId;
-                    currentNurseName = nurse.name;
-
-                    // Set online status
-                    await updateDoc(doc(db, nursesPath, currentNurseDocId), { isOnline: true });
-
-                    document.getElementById('nurse-login-form').reset();
-                    switchView('view-nurseDashboard');
-                } catch(error) {
-                    console.error("Login Error: ", error);
-                    showGlobalMsg('ข้อผิดพลาด', 'เกิดข้อผิดพลาดในการเข้าสู่ระบบ กรุณาลองใหม่');
-                }
-            });
-
-            // Admin Login
-            document.getElementById('admin-login-form').addEventListener('submit', (e) => {
-                e.preventDefault();
-                if (document.getElementById('admin-password').value === 'wasiaadmin') {
-                    document.getElementById('admin-password').value = '';
-                    switchView('view-adminDashboard');
-                } else {
-                    showGlobalMsg('Login Failed', 'รหัสผ่านไม่ถูกต้อง');
-                }
-            });
-
-            document.getElementById('add-branch-form').addEventListener('submit', async (e) => {
-                e.preventDefault();
-                const bName = document.getElementById('new-branch-name').value;
-                if (bName) await addDoc(collection(db, branchesPath), { name: bName });
-                document.getElementById('new-branch-name').value = '';
-            });
-
-            document.getElementById('form-edit-branch').addEventListener('submit', async (e) => {
-                e.preventDefault();
-                const id = document.getElementById('edit-branch-id').value;
-                const newName = document.getElementById('edit-branch-name').value;
-                if (id && newName) {
-                    await updateDoc(doc(db, branchesPath, id), { name: newName });
-                    closeEditBranchModal();
-                }
-            });
-
-            document.getElementById('form-edit-nurse').addEventListener('submit', async (e) => {
-                e.preventDefault();
-                const id = document.getElementById('edit-nurse-id').value;
-                if (!id) return;
-                
-                const name = document.getElementById('edit-nurse-name').value.trim();
-                const branchId = document.getElementById('edit-nurse-branch').value;
-                const username = document.getElementById('edit-nurse-username').value.trim().toLowerCase();
-                const password = document.getElementById('edit-nurse-password').value.trim();
-                
-                if (nursesList.some(n => (n.username || '').trim().toLowerCase() === username && n.id !== id)) {
-                    showGlobalMsg('ข้อผิดพลาด', 'Username นี้ถูกใช้งานแล้ว กรุณาใช้ชื่ออื่น');
-                    return;
-                }
-
-                await updateDoc(doc(db, nursesPath, id), { name, branchId, username, password });
-                closeEditNurseModal();
-                showGlobalMsg('สำเร็จ', 'อัปเดตข้อมูลพยาบาลเรียบร้อยแล้ว');
-            });
+        function openEditBranchModal(id, name) {
+            document.getElementById('edit-branch-id').value = id;
+            document.getElementById('edit-branch-name').value = name;
+            document.getElementById('branch-edit-modal').classList.remove('hidden-element');
         }
 
-        function checkLandingBtn() {
-            const btn = document.getElementById('btn-goto-form');
-            if (selectedBranchId) {
-                btn.disabled = false;
-                btn.classList.replace('bg-gray-300', 'bg-red-600');
-            } else {
-                btn.disabled = true;
-                btn.classList.replace('bg-red-600', 'bg-gray-300');
+        function closeEditBranchModal() {
+            document.getElementById('branch-edit-modal').classList.add('hidden-element');
+        }
+
+        // ==========================================
+        // Main Event Initializations
+        // ==========================================
+        function initUI() {
+            // -- PATIENT LOGIN --
+            const btnLoginPatient = document.getElementById('btn-login-patient');
+            if(btnLoginPatient) {
+                btnLoginPatient.addEventListener('click', async () => {
+                    const empId = document.getElementById('login-emp-id').value.trim();
+                    if (!empId) {
+                        showGlobalMsg('แจ้งเตือน', 'กรุณาระบุรหัสพนักงาน');
+                        return;
+                    }
+
+                    const btn = document.getElementById('btn-login-patient');
+                    const origText = btn.innerText;
+                    btn.disabled = true;
+                    btn.innerText = 'กำลังตรวจสอบ...';
+
+                    try {
+                        const docRef = doc(db, employeesPath, empId);
+                        const docSnap = await getDoc(docRef);
+
+                        if (!docSnap.exists()) {
+                            showGlobalMsg('ไม่พบข้อมูล', 'ไม่พบรหัสพนักงานนี้ในระบบ กรุณาติดต่อฝ่ายบุคคลเพื่อตรวจสอบข้อมูล (หากเป็นแอดมิน: กรุณานำเข้าข้อมูลพนักงานในเมนูจัดการก่อน)');
+                            btn.disabled = false;
+                            btn.innerText = origText;
+                            return; 
+                        }
+
+                        const empData = docSnap.data();
+                        const bId = empData.branchId;
+
+                        const isNurseOnline = nursesList.some(n => n.branchId === bId && n.isOnline === true && n.approvalStatus === 'approved');
+                        
+                        if (!isNurseOnline) {
+                            showGlobalMsg('ไม่สามารถจองคิวได้', 'ขณะนี้ "พยาบาลประจำสาขาของคุณ" ไม่ออนไลน์ (ออฟไลน์) กรุณารอชั่วคราวหรือติดต่อฝ่ายบุคคล');
+                            btn.disabled = false;
+                            btn.innerText = origText;
+                            return;
+                        }
+
+                        selectedBranchId = bId;
+                        currentPatientEmpId = empId;
+                        currentPatientData = empData;
+                        
+                        document.getElementById('disp-p-empId').innerText = empId;
+                        document.getElementById('disp-p-name').innerText = empData.name;
+                        document.getElementById('disp-p-gender').innerText = empData.gender;
+                        
+                        const bName = branchesList.find(b => b.id === selectedBranchId)?.name || '';
+                        document.getElementById('disp-p-branch').innerText = bName;
+
+                        switchView('view-patientForm');
+                        
+                        btn.disabled = false;
+                        btn.innerText = origText;
+
+                    } catch (error) {
+                        console.error("Login Error:", error);
+                        showGlobalMsg('Error', 'เกิดข้อผิดพลาดในการตรวจสอบข้อมูล');
+                        btn.disabled = false;
+                        btn.innerText = origText;
+                    }
+                });
+            }
+
+            // -- PATIENT SYMPTOM SELECT --
+            const pSymptom = document.getElementById('p-symptom');
+            if(pSymptom) {
+                pSymptom.addEventListener('change', (e) => {
+                    const otherContainer = document.getElementById('p-symptom-other-container');
+                    if (e.target.value === 'อื่นๆ (ระบุ)') {
+                        otherContainer.classList.remove('hidden-element');
+                        document.getElementById('p-symptom-other').required = true;
+                    } else {
+                        otherContainer.classList.add('hidden-element');
+                        document.getElementById('p-symptom-other').required = false;
+                    }
+                });
+            }
+
+            // -- PATIENT SUBMIT QUEUE --
+            const pForm = document.getElementById('patient-form');
+            if(pForm) {
+                pForm.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    if (!selectedBranchId || !currentUser || !currentPatientData) return;
+                    
+                    const btn = document.getElementById('btn-submit-form');
+                    btn.disabled = true;
+                    try {
+                        const name = currentPatientData.name;
+                        const empId = currentPatientEmpId;
+                        const gender = currentPatientData.gender;
+                        
+                        const sympSelect = document.getElementById('p-symptom').value;
+                        const sympOther = document.getElementById('p-symptom-other').value;
+                        const finalSymptom = sympSelect === 'อื่นๆ (ระบุ)' ? sympOther : sympSelect;
+                        const needRest = document.querySelector('input[name="rest"]:checked').value === 'yes';
+                        const time = document.getElementById('p-time').value;
+
+                        const todayStr = new Date().toISOString().split('T')[0];
+
+                        const qQuery = query(collection(db, queuesPath), where("branchId", "==", selectedBranchId), where("date", "==", todayStr));
+                        const qSnap = await getDocs(qQuery);
+                        
+                        let maxQ = 0;
+                        qSnap.forEach(docSnap => {
+                            const data = docSnap.data();
+                            if (data.queueNumber && data.queueNumber.startsWith('A')) {
+                                const num = parseInt(data.queueNumber.substring(1));
+                                if (num > maxQ) maxQ = num;
+                            }
+                        });
+                        
+                        const nextQueueNo = maxQ + 1;
+                        const queueString = 'A' + String(nextQueueNo).padStart(3, '0');
+
+                        const docRef = await addDoc(collection(db, queuesPath), {
+                            branchId: selectedBranchId, 
+                            patientName: name, 
+                            empId: empId, 
+                            gender: gender,
+                            symptom: finalSymptom, 
+                            needRest: needRest, 
+                            status: 'waiting',
+                            createdAt: serverTimestamp(), 
+                            date: todayStr, 
+                            time: time,
+                            queueNumber: queueString
+                        });
+                        
+                        myQueueId = docRef.id;
+                        document.getElementById('patient-form').reset();
+                        startMyQueueListener();
+                        switchView('view-patientQueue');
+                    } catch (error) {
+                        console.error("Queue Error:", error);
+                        showGlobalMsg('Error', 'ไม่สามารถบันทึกคิวได้');
+                    } finally {
+                        btn.disabled = false;
+                    }
+                });
+            }
+
+            // -- NURSE REGISTER --
+            const nRegForm = document.getElementById('nurse-register-form');
+            if(nRegForm) {
+                nRegForm.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    const name = document.getElementById('reg-nurse-name').value.trim();
+                    const branchId = document.getElementById('reg-nurse-branch').value;
+                    const username = document.getElementById('reg-nurse-user').value.trim().toLowerCase();
+                    const password = document.getElementById('reg-nurse-pass').value.trim();
+
+                    if (nursesList.some(n => (n.username || '').trim().toLowerCase() === username)) {
+                        showGlobalMsg('ข้อผิดพลาด', 'Username นี้ถูกใช้งานแล้ว กรุณาใช้ชื่ออื่น');
+                        return;
+                    }
+
+                    await addDoc(collection(db, nursesPath), {
+                        name, branchId, username, password,
+                        approvalStatus: 'pending', isOnline: false, createdAt: serverTimestamp()
+                    });
+
+                    document.getElementById('nurse-register-form').reset();
+                    showGlobalMsg('สำเร็จ', 'ส่งคำขอสมัครสำเร็จ กรุณาแจ้งแอดมินให้อนุมัติก่อนเข้าใช้งาน');
+                    switchView('view-nurseLogin');
+                });
+            }
+
+            // -- NURSE LOGIN --
+            const nLoginForm = document.getElementById('nurse-login-form');
+            if(nLoginForm) {
+                nLoginForm.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    try {
+                        const user = document.getElementById('nurse-login-user').value.trim().toLowerCase();
+                        const pass = document.getElementById('nurse-login-pass').value.trim();
+
+                        const nurse = nursesList.find(n => (n.username || '').trim().toLowerCase() === user && (n.password || '').trim() === pass);
+
+                        if (!nurse) {
+                            const userExists = nursesList.find(n => (n.username || '').trim().toLowerCase() === user);
+                            if (userExists) {
+                                showGlobalMsg('เข้าสู่ระบบล้มเหลว', 'รหัสผ่าน (Password) ไม่ถูกต้อง');
+                            } else {
+                                showGlobalMsg('เข้าสู่ระบบล้มเหลว', 'ไม่พบชื่อผู้ใช้ (Username) นี้ในระบบ');
+                            }
+                            return;
+                        }
+                        if (nurse.approvalStatus !== 'approved') {
+                            showGlobalMsg('รอการอนุมัติ', 'ไอดีของคุณกำลังรอการอนุมัติ กรุณาแจ้งแอดมินให้เข้าสู่ระบบเพื่อกด "อนุมัติ" ให้คุณก่อนเข้าใช้งาน');
+                            return;
+                        }
+
+                        currentNurseDocId = nurse.id;
+                        nurseBranchId = nurse.branchId;
+                        currentNurseName = nurse.name;
+
+                        await updateDoc(doc(db, nursesPath, currentNurseDocId), { isOnline: true });
+
+                        document.getElementById('nurse-login-form').reset();
+                        switchView('view-nurseDashboard');
+                    } catch(error) {
+                        console.error("Login Error: ", error);
+                        showGlobalMsg('ข้อผิดพลาด', 'เกิดข้อผิดพลาดในการเข้าสู่ระบบ กรุณาลองใหม่');
+                    }
+                });
+            }
+
+            // -- ADMIN LOGIN --
+            const adminForm = document.getElementById('admin-login-form');
+            if(adminForm) {
+                adminForm.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    if (document.getElementById('admin-password').value === 'wasiaadmin') {
+                        document.getElementById('admin-password').value = '';
+                        switchView('view-adminDashboard');
+                    } else {
+                        showGlobalMsg('Login Failed', 'รหัสผ่านไม่ถูกต้อง');
+                    }
+                });
+            }
+
+            // -- ADMIN: ADD BRANCH --
+            const addBForm = document.getElementById('add-branch-form');
+            if(addBForm) {
+                addBForm.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    const bName = document.getElementById('new-branch-name').value;
+                    if (bName) await addDoc(collection(db, branchesPath), { name: bName });
+                    document.getElementById('new-branch-name').value = '';
+                });
+            }
+
+            // -- ADMIN: EDIT BRANCH --
+            const editBForm = document.getElementById('form-edit-branch');
+            if(editBForm) {
+                editBForm.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    const id = document.getElementById('edit-branch-id').value;
+                    const newName = document.getElementById('edit-branch-name').value;
+                    if (id && newName) {
+                        await updateDoc(doc(db, branchesPath, id), { name: newName });
+                        closeEditBranchModal();
+                    }
+                });
+            }
+
+            // -- ADMIN: EDIT NURSE --
+            const editNForm = document.getElementById('form-edit-nurse');
+            if(editNForm) {
+                editNForm.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    const id = document.getElementById('edit-nurse-id').value;
+                    if (!id) return;
+                    
+                    const name = document.getElementById('edit-nurse-name').value.trim();
+                    const branchId = document.getElementById('edit-nurse-branch').value;
+                    const username = document.getElementById('edit-nurse-username').value.trim().toLowerCase();
+                    const password = document.getElementById('edit-nurse-password').value.trim();
+                    
+                    if (nursesList.some(n => (n.username || '').trim().toLowerCase() === username && n.id !== id)) {
+                        showGlobalMsg('ข้อผิดพลาด', 'Username นี้ถูกใช้งานแล้ว กรุณาใช้ชื่ออื่น');
+                        return;
+                    }
+
+                    await updateDoc(doc(db, nursesPath, id), { name, branchId, username, password });
+                    closeEditNurseModal();
+                    showGlobalMsg('สำเร็จ', 'อัปเดตข้อมูลพยาบาลเรียบร้อยแล้ว');
+                });
+            }
+
+            // -- ADMIN: UPLOAD CSV --
+            const uploadEmpForm = document.getElementById('upload-emp-form');
+            if(uploadEmpForm) {
+                uploadEmpForm.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    const bId = document.getElementById('upload-emp-branch').value;
+                    const fileInput = document.getElementById('upload-emp-file');
+                    if (!bId || fileInput.files.length === 0) return;
+
+                    const file = fileInput.files[0];
+                    const reader = new FileReader();
+
+                    // แสดงสถานะระหว่างกำลังอัปโหลด
+                    const btnSubmit = uploadEmpForm.querySelector('button[type="submit"]');
+                    const origBtnHtml = btnSubmit.innerHTML;
+                    btnSubmit.disabled = true;
+                    btnSubmit.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> กำลังอัปโหลด...';
+                    lucide.createIcons();
+
+                    reader.onload = async (event) => {
+                        try {
+                            const csvText = event.target.result;
+                            const rows = csvText.split('\n');
+                            let count = 0;
+
+                            const parseCSVLine = (line) => {
+                                let result = [], current = '', inQuotes = false;
+                                for (let i = 0; i < line.length; i++) {
+                                    if (line[i] === '"') inQuotes = !inQuotes;
+                                    else if (line[i] === ',' && !inQuotes) { result.push(current.trim()); current = ''; }
+                                    else current += line[i];
+                                }
+                                result.push(current.trim());
+                                return result.map(s => s.replace(/^"|"$/g, '').trim());
+                            };
+
+                            for (let i = 0; i < rows.length; i++) {
+                                const line = rows[i].trim();
+                                if (!line) continue;
+                                
+                                const cols = parseCSVLine(line);
+                                if (cols.length >= 2) {
+                                    const empId = cols[0];
+                                    
+                                    // ข้ามบรรทัดหัวตาราง
+                                    if (empId === 'รหัสพนักงาน' || empId.toLowerCase() === 'empid' || empId.includes('รหัส')) continue;
+                                    if (!empId) continue;
+
+                                    let name = '';
+                                    let gender = '';
+
+                                    // 1. ระบบค้นหาคอลัมน์ "เพศ" อัตโนมัติ (ดักจับคำว่า ชาย/หญิง)
+                                    let genderIdx = -1;
+                                    for(let j = 1; j < cols.length; j++){
+                                        let val = cols[j].trim();
+                                        if(val === 'ชาย' || val === 'หญิง' || val.toLowerCase() === 'male' || val.toLowerCase() === 'female'){
+                                            genderIdx = j;
+                                            break;
+                                        }
+                                    }
+
+                                    if (genderIdx !== -1) {
+                                        // ถ้าเจอเพศ ให้เอาข้อมูลทั้งหมดก่อนหน้ามารวมกันเป็นชื่อ
+                                        gender = cols[genderIdx].trim();
+                                        name = cols.slice(1, genderIdx).join(' ').trim();
+                                    } else {
+                                        // หากหาคำว่าเพศไม่เจอ ให้ทำ Fallback
+                                        if (cols.length === 3) {
+                                            name = cols[1];
+                                            gender = cols[2];
+                                        } else {
+                                            name = cols.slice(1, 3).join(' ').trim(); // เก็บแค่ 2 คอลัมน์แรกกันพลาด
+                                            gender = 'ไม่ระบุ';
+                                        }
+                                    }
+
+                                    // 2. ตัดคำว่า LHFG, LHB และเว้นวรรคส่วนเกินทิ้งไป
+                                    name = name.replace(/\b(LHFG|LHB|lhfg|lhb)\b/ig, '').replace(/\s+/g, ' ').trim();
+
+                                    // นำเข้า / อัปเดตข้อมูลทับของเดิม
+                                    await setDoc(doc(db, employeesPath, empId), {
+                                        name: name,
+                                        gender: gender,
+                                        branchId: bId
+                                    });
+                                    count++;
+                                }
+                            }
+                            
+                            fileInput.value = '';
+                            btnSubmit.disabled = false;
+                            btnSubmit.innerHTML = origBtnHtml;
+                            lucide.createIcons();
+
+                            // แจ้งเตือนเมื่อสำเร็จ
+                            showGlobalMsg('อัปโหลดสำเร็จ', `นำเข้าและอัปเดตข้อมูลพนักงานเรียบร้อยแล้ว จำนวน ${count} รายการ`);
+
+                        } catch (err) {
+                            console.error('CSV Parse Error:', err);
+                            btnSubmit.disabled = false;
+                            btnSubmit.innerHTML = origBtnHtml;
+                            lucide.createIcons();
+                            showGlobalMsg('ข้อผิดพลาด', 'รูปแบบไฟล์ไม่ถูกต้อง หรือไม่สามารถอัปโหลดได้');
+                        }
+                    };
+
+                    reader.readAsText(file, 'UTF-8');
+                });
             }
         }
 
-        // ... (Queue listening logic remains same) ...
+        // ==========================================
+        // Queue Listeners & Renders
+        // ==========================================
         function startMyQueueListener() {
             if (!currentUser || !myQueueId) return;
             unsubMyQueue = onSnapshot(doc(db, queuesPath, myQueueId), (docSnap) => {
@@ -1163,7 +1388,6 @@
                     myQueueData = docSnap.data();
                     renderPatientQueueUI();
                 } else {
-                    // หากเอกสารถูกลบ (โดนพยาบาลกดยกเลิก)
                     showGlobalMsg('คิวถูกยกเลิก', 'คิวของคุณถูกยกเลิกโดยพยาบาลแล้ว');
                     leaveQueue();
                 }
@@ -1192,7 +1416,9 @@
             const isCalled = myQueueData.status === 'called';
             const isExamining = myQueueData.status === 'acknowledged';
             const isCompleted = myQueueData.status === 'completed';
-            document.getElementById('q-number').innerText = 'A' + myQueueId.substring(0,3).toUpperCase();
+            
+            document.getElementById('q-number').innerText = myQueueData.queueNumber || 'A---';
+            
             document.getElementById('q-name').innerText = myQueueData.patientName;
             document.getElementById('q-empId').innerText = `รหัสพนักงาน: ${myQueueData.empId}`;
             const banner = document.getElementById('q-status-banner');
@@ -1235,93 +1461,105 @@
             document.getElementById('nd-active-count').innerText = `(${activeQueues.length})`;
             document.getElementById('nd-waiting-count').innerText = `(${waitingQueues.length})`;
             
-            document.getElementById('nd-active-list').innerHTML = activeQueues.map(q => `
-                <div class="bg-white p-4 shadow rounded-lg border-l-4 border-blue-500 relative">
-                    <div class="font-bold text-gray-800 flex items-center gap-2">
-                        ${escapeHtml(q.patientName)} 
-                        <span class="text-xs font-normal bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">${escapeHtml(q.gender || '-')}</span>
-                    </div>
-                    <div class="text-sm text-red-600 font-medium mt-1 flex items-start gap-1">
-                        <i data-lucide="stethoscope" class="w-4 h-4 mt-0.5 shrink-0"></i> 
-                        <span>อาการ: ${escapeHtml(q.symptom)}</span>
-                    </div>
-                    <div class="text-sm text-gray-600 mt-2 flex items-center gap-2">
-                        <span class="w-2 h-2 rounded-full ${q.status === 'acknowledged' ? 'bg-green-500' : 'bg-yellow-500 animate-pulse'}"></span>
-                        ${q.status === 'acknowledged' ? 'กำลังตรวจ' : 'รอผู้ป่วยยืนยันรับคิว'}
-                        ${q.needRest ? '<span class="text-xs ml-auto bg-purple-100 text-purple-700 px-2 py-0.5 rounded">ต้องการนอนพัก</span>' : ''}
-                    </div>
-                    <div class="flex gap-2 mt-4">
-                        ${q.status === 'acknowledged' ? `<button onclick="completeQueue('${q.id}')" class="flex-1 bg-blue-600 hover:bg-blue-700 transition-colors text-white rounded py-2 font-medium shadow">ตรวจเสร็จสิ้น</button>` : ''}
-                        <button onclick="confirmCancelQueue('${q.id}')" class="flex-1 bg-red-50 text-red-600 hover:bg-red-100 transition-colors rounded py-2 font-medium border border-red-100">ยกเลิกคิว</button>
-                    </div>
-                </div>`).join('');
+            const ndActiveEl = document.getElementById('nd-active-list');
+            if(ndActiveEl) {
+                ndActiveEl.innerHTML = activeQueues.map(q => `
+                    <div class="bg-white p-4 shadow rounded-lg border-l-4 border-blue-500 relative">
+                        <div class="font-bold text-gray-800 flex items-center gap-2">
+                            <span class="bg-blue-100 text-blue-800 px-2 py-0.5 rounded text-sm">${q.queueNumber || 'A---'}</span>
+                            ${escapeHtml(q.patientName)} 
+                            <span class="text-xs font-normal bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">${escapeHtml(q.gender || '-')}</span>
+                        </div>
+                        <div class="text-sm text-red-600 font-medium mt-1 flex items-start gap-1">
+                            <i data-lucide="stethoscope" class="w-4 h-4 mt-0.5 shrink-0"></i> 
+                            <span>อาการ: ${escapeHtml(q.symptom)}</span>
+                        </div>
+                        <div class="text-sm text-gray-600 mt-2 flex items-center gap-2">
+                            <span class="w-2 h-2 rounded-full ${q.status === 'acknowledged' ? 'bg-green-500' : 'bg-yellow-500 animate-pulse'}"></span>
+                            ${q.status === 'acknowledged' ? 'กำลังตรวจ' : 'รอผู้ป่วยยืนยันรับคิว'}
+                            ${q.needRest ? '<span class="text-xs ml-auto bg-purple-100 text-purple-700 px-2 py-0.5 rounded">ต้องการนอนพัก</span>' : ''}
+                        </div>
+                        <div class="flex gap-2 mt-4">
+                            ${q.status === 'acknowledged' ? `<button onclick="completeQueue('${q.id}')" class="flex-1 bg-blue-600 hover:bg-blue-700 transition-colors text-white rounded py-2 font-medium shadow">ตรวจเสร็จสิ้น</button>` : ''}
+                            <button onclick="confirmCancelQueue('${q.id}')" class="flex-1 bg-red-50 text-red-600 hover:bg-red-100 transition-colors rounded py-2 font-medium border border-red-100">ยกเลิกคิว</button>
+                        </div>
+                    </div>`).join('');
+            }
                 
-            document.getElementById('nd-waiting-list').innerHTML = waitingQueues.map((q, i) => `
-                <li class="p-4 flex flex-col sm:flex-row sm:justify-between sm:items-start border-b gap-3 hover:bg-gray-50 transition-colors">
-                    <div>
-                        <div class="flex items-center gap-2">
-                            <b class="text-gray-800 text-lg">${escapeHtml(q.patientName)}</b> 
-                            <span class="bg-gray-200 text-gray-700 px-2 py-0.5 rounded text-xs font-bold shadow-sm">A${q.id.substring(0,3).toUpperCase()}</span>
+            const ndWaitEl = document.getElementById('nd-waiting-list');
+            if(ndWaitEl) {
+                ndWaitEl.innerHTML = waitingQueues.map((q, i) => `
+                    <li class="p-4 flex flex-col sm:flex-row sm:justify-between sm:items-start border-b gap-3 hover:bg-gray-50 transition-colors">
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <span class="bg-gray-200 text-gray-700 px-2 py-0.5 rounded text-sm font-bold shadow-sm">${q.queueNumber || 'A---'}</span>
+                                <b class="text-gray-800 text-lg">${escapeHtml(q.patientName)}</b> 
+                            </div>
+                            <div class="text-sm text-red-600 mt-1.5 flex items-start gap-1.5 font-medium bg-red-50 inline-block px-2 py-1 rounded">
+                                <i data-lucide="alert-circle" class="w-4 h-4 mt-0.5 inline-block shrink-0"></i> 
+                                อาการ: ${escapeHtml(q.symptom)}
+                            </div>
+                            <div class="text-xs text-gray-500 mt-1 flex gap-2">
+                                <span>เพศ: ${escapeHtml(q.gender || '-')}</span> | 
+                                <span>รหัส: ${escapeHtml(q.empId)}</span>
+                            </div>
                         </div>
-                        <div class="text-sm text-red-600 mt-1.5 flex items-start gap-1.5 font-medium bg-red-50 inline-block px-2 py-1 rounded">
-                            <i data-lucide="alert-circle" class="w-4 h-4 mt-0.5 inline-block shrink-0"></i> 
-                            อาการ: ${escapeHtml(q.symptom)}
+                        <div class="flex gap-2 w-full sm:w-auto mt-2 sm:mt-0 shrink-0">
+                            <button onclick="callPatient('${q.id}')" class="flex-1 sm:flex-none bg-blue-600 hover:bg-blue-700 transition-colors shadow-md text-white px-5 py-2.5 rounded-lg text-sm font-bold flex items-center justify-center gap-1">
+                                <i data-lucide="megaphone" class="w-4 h-4"></i> เรียกคิว
+                            </button>
+                            <button onclick="confirmCancelQueue('${q.id}')" class="flex-1 sm:flex-none bg-white text-red-600 hover:bg-red-50 transition-colors shadow-sm border border-gray-200 px-3 py-2.5 rounded-lg text-sm font-medium">
+                                <i data-lucide="x" class="w-4 h-4"></i>
+                            </button>
                         </div>
-                        <div class="text-xs text-gray-500 mt-1 flex gap-2">
-                            <span>เพศ: ${escapeHtml(q.gender || '-')}</span> | 
-                            <span>รหัส: ${escapeHtml(q.empId)}</span>
-                        </div>
-                    </div>
-                    <div class="flex gap-2 w-full sm:w-auto mt-2 sm:mt-0 shrink-0">
-                        <button onclick="callPatient('${q.id}')" class="flex-1 sm:flex-none bg-blue-600 hover:bg-blue-700 transition-colors shadow-md text-white px-5 py-2.5 rounded-lg text-sm font-bold flex items-center justify-center gap-1">
-                            <i data-lucide="megaphone" class="w-4 h-4"></i> เรียกคิว
-                        </button>
-                        <button onclick="confirmCancelQueue('${q.id}')" class="flex-1 sm:flex-none bg-white text-red-600 hover:bg-red-50 transition-colors shadow-sm border border-gray-200 px-3 py-2.5 rounded-lg text-sm font-medium">
-                            <i data-lucide="x" class="w-4 h-4"></i>
-                        </button>
-                    </div>
-                </li>`).join('');
-            lucide.createIcons();
-            
-            // Render Reports too
+                    </li>`).join('');
+            }
+
             const completedQueues = allQueuesList.filter(q => q.branchId === nurseBranchId && q.status === 'completed')
                                         .sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
             const reportContainer = document.getElementById('nd-report-list');
             const reportEmpty = document.getElementById('nd-report-empty');
             
-            if (completedQueues.length === 0) {
-                reportContainer.innerHTML = '';
-                reportEmpty.classList.remove('hidden-element');
-            } else {
-                reportEmpty.classList.add('hidden-element');
-                reportContainer.innerHTML = completedQueues.map(q => {
-                    const dateStr = q.date || (q.createdAt ? new Date(q.createdAt.seconds * 1000).toLocaleDateString('th-TH') : '');
-                    return `
-                        <tr class="hover:bg-gray-50 border-b border-gray-50">
-                            <td class="p-3 text-gray-600">${escapeHtml(dateStr)}</td>
-                            <td class="p-3 font-medium text-gray-800">${escapeHtml(q.patientName)}</td>
-                            <td class="p-3 text-gray-600">${escapeHtml(q.empId)}</td>
-                            <td class="p-3 text-gray-600">${escapeHtml(q.symptom)}</td>
-                            <td class="p-3 text-gray-600">${q.needRest ? '<span class="text-purple-600">นอนพัก</span>' : 'ไม่นอนพัก'}</td>
-                            <td class="p-3 text-right">
-                                <button onclick="confirmDeleteHistory('${q.id}')" class="text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 px-2 py-1 rounded text-xs transition-colors">ลบ</button>
-                            </td>
-                        </tr>
-                    `;
-                }).join('');
+            if (reportContainer && reportEmpty) {
+                if (completedQueues.length === 0) {
+                    reportContainer.innerHTML = '';
+                    reportEmpty.classList.remove('hidden-element');
+                } else {
+                    reportEmpty.classList.add('hidden-element');
+                    reportContainer.innerHTML = completedQueues.map(q => {
+                        const dateStr = q.date || (q.createdAt ? new Date(q.createdAt.seconds * 1000).toLocaleDateString('th-TH') : '');
+                        return `
+                            <tr class="hover:bg-gray-50 border-b border-gray-50">
+                                <td class="p-3 text-gray-600">${escapeHtml(dateStr)}</td>
+                                <td class="p-3 font-medium text-gray-800">${escapeHtml(q.patientName)}</td>
+                                <td class="p-3 text-gray-600">${escapeHtml(q.empId)}</td>
+                                <td class="p-3 text-gray-600">${escapeHtml(q.symptom)}</td>
+                                <td class="p-3 text-gray-600">${q.needRest ? '<span class="text-purple-600">นอนพัก</span>' : 'ไม่นอนพัก'}</td>
+                                <td class="p-3 text-right">
+                                    <button onclick="confirmDeleteHistory('${q.id}')" class="text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 px-2 py-1 rounded text-xs transition-colors">ลบ</button>
+                                </td>
+                            </tr>
+                        `;
+                    }).join('');
+                }
             }
+
+            setTimeout(() => { lucide.createIcons(); }, 10);
         }
 
         function switchNurseTab(tab) {
             const btnQueue = document.getElementById('tab-nurse-queue');
             const btnReport = document.getElementById('tab-nurse-report');
-            document.getElementById('nurse-view-queue').classList.toggle('hidden-element', tab !== 'queue');
-            document.getElementById('nurse-view-report').classList.toggle('hidden-element', tab === 'queue');
+            const vQueue = document.getElementById('nurse-view-queue');
+            const vReport = document.getElementById('nurse-view-report');
+
+            if(vQueue) vQueue.classList.toggle('hidden-element', tab !== 'queue');
+            if(vReport) vReport.classList.toggle('hidden-element', tab === 'queue');
             
-            if (tab === 'queue') {
+            if (tab === 'queue' && btnQueue && btnReport) {
                 btnQueue.classList.add('border-red-600', 'text-red-600'); btnQueue.classList.remove('border-transparent', 'text-gray-500');
                 btnReport.classList.add('border-transparent', 'text-gray-500'); btnReport.classList.remove('border-red-600', 'text-red-600');
-            } else {
+            } else if(btnQueue && btnReport) {
                 btnReport.classList.add('border-red-600', 'text-red-600'); btnReport.classList.remove('border-transparent', 'text-gray-500');
                 btnQueue.classList.add('border-transparent', 'text-gray-500'); btnQueue.classList.remove('border-red-600', 'text-red-600');
             }
@@ -1344,33 +1582,34 @@
         async function fetchAdminLogs() {
             const snapshot = await getDocs(collection(db, queuesPath));
             const logs = snapshot.docs.map(d => ({id: d.id, ...d.data()})).filter(d => d.status === 'completed');
-            adminLogsData = logs; // บันทึกข้อมูลลงตัวแปร Global สำหรับ Export
+            adminLogsData = logs;
             const container = document.getElementById('admin-log-list');
             const empty = document.getElementById('admin-log-empty');
             
-            if(logs.length === 0) {
-                container.innerHTML = '';
-                empty.classList.remove('hidden-element');
-            } else {
-                empty.classList.add('hidden-element');
-                container.innerHTML = logs.map(l => {
-                    const bName = branchesList.find(b => b.id === l.branchId)?.name || 'ไม่พบสาขา';
-                    return `
-                        <tr>
-                            <td class="p-2">${l.date || ''}</td>
-                            <td class="p-2 text-blue-600">${escapeHtml(bName)}</td>
-                            <td class="p-2">${escapeHtml(l.patientName)}<br><span class="text-xs text-gray-500">${escapeHtml(l.empId)}</span></td>
-                            <td class="p-2">${escapeHtml(l.gender || '-')}</td>
-                            <td class="p-2">${escapeHtml(l.symptom)}</td>
-                        </tr>
-                    `;
-                }).join('');
+            if(container && empty) {
+                if(logs.length === 0) {
+                    container.innerHTML = '';
+                    empty.classList.remove('hidden-element');
+                } else {
+                    empty.classList.add('hidden-element');
+                    container.innerHTML = logs.map(l => {
+                        const bName = branchesList.find(b => b.id === l.branchId)?.name || 'ไม่พบสาขา';
+                        return `
+                            <tr>
+                                <td class="p-2">${l.date || ''}</td>
+                                <td class="p-2 text-blue-600">${escapeHtml(bName)}</td>
+                                <td class="p-2">${escapeHtml(l.patientName)}<br><span class="text-xs text-gray-500">${escapeHtml(l.empId)}</span></td>
+                                <td class="p-2">${escapeHtml(l.gender || '-')}</td>
+                                <td class="p-2">${escapeHtml(l.symptom)}</td>
+                            </tr>
+                        `;
+                    }).join('');
+                }
             }
             updateAdminChart(logs);
         }
 
         function updateAdminChart(completedLogs) {
-            // 1. Chart: จำนวนผู้ป่วยแยกตามสาขา
             const branchCounts = {};
             completedLogs.forEach(log => {
                 branchCounts[log.branchId] = (branchCounts[log.branchId] || 0) + 1;
@@ -1388,7 +1627,6 @@
                 });
             }
 
-            // 2. Chart: สัดส่วนเพศ
             const genderCounts = { 'ชาย': 0, 'หญิง': 0, 'อื่นๆ': 0 };
             completedLogs.forEach(log => { 
                 if(genderCounts[log.gender] !== undefined) genderCounts[log.gender]++; 
@@ -1404,7 +1642,6 @@
                 });
             }
 
-            // 3. Chart: Top 5 อาการ
             const sympCounts = {};
             completedLogs.forEach(log => {
                 const s = log.symptom || 'ไม่ระบุ';
@@ -1425,16 +1662,6 @@
             }
         }
 
-        function openEditBranchModal(id, name) {
-            document.getElementById('edit-branch-id').value = id;
-            document.getElementById('edit-branch-name').value = name;
-            document.getElementById('branch-edit-modal').classList.remove('hidden-element');
-        }
-
-        function closeEditBranchModal() {
-            document.getElementById('branch-edit-modal').classList.add('hidden-element');
-        }
-        
         function escapeHtml(str) { 
             if (str === null || str === undefined) return '';
             return String(str).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m])); 
@@ -1446,7 +1673,7 @@
                 return;
             }
             
-            let csvContent = "\uFEFF"; // UTF-8 BOM ทำให้เปิดใน Excel ภาษาไทยไม่เพี้ยน
+            let csvContent = "\uFEFF"; 
             csvContent += "วันที่,เวลา,สาขา,รหัสพนักงาน,ชื่อ-นามสกุล,เพศ,อาการ,สถานะการพัก\n";
             
             adminLogsData.forEach(log => {
