@@ -1284,14 +1284,17 @@
                     const btnSubmit = uploadEmpForm.querySelector('button[type="submit"]');
                     const origBtnHtml = btnSubmit.innerHTML;
                     btnSubmit.disabled = true;
-                    btnSubmit.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> กำลังอัปโหลด...';
+                    btnSubmit.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> กำลังประมวลผลไฟล์...';
                     lucide.createIcons();
 
                     reader.onload = async (event) => {
                         try {
                             const csvText = event.target.result;
                             const rows = csvText.split('\n');
-                            let count = 0;
+                            
+                            const statusDiv = document.getElementById('upload-emp-status');
+                            statusDiv.innerText = 'กำลังตรวจสอบข้อมูล...';
+                            statusDiv.classList.remove('hidden-element');
 
                             const parseCSVLine = (line) => {
                                 let result = [], current = '', inQuotes = false;
@@ -1303,6 +1306,8 @@
                                 result.push(current.trim());
                                 return result.map(s => s.replace(/^"|"$/g, '').trim());
                             };
+
+                            const validEmployees = [];
 
                             for (let i = 0; i < rows.length; i++) {
                                 const line = rows[i].trim();
@@ -1347,30 +1352,56 @@
                                     // 2. ตัดคำว่า LHFG, LHB และเว้นวรรคส่วนเกินทิ้งไป
                                     name = name.replace(/\b(LHFG|LHB|lhfg|lhb)\b/ig, '').replace(/\s+/g, ' ').trim();
 
-                                    // นำเข้า / อัปเดตข้อมูลทับของเดิม
-                                    await setDoc(doc(db, employeesPath, empId), {
-                                        name: name,
-                                        gender: gender,
-                                        branchId: bId
-                                    });
-                                    count++;
+                                    validEmployees.push({ empId, name, gender, branchId: bId });
                                 }
+                            }
+
+                            if (validEmployees.length === 0) {
+                                throw new Error("ไม่พบข้อมูลพนักงานในไฟล์");
+                            }
+
+                            btnSubmit.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> กำลังล้างข้อมูลเก่า...';
+                            statusDiv.innerText = 'กำลังลบข้อมูลพนักงานเก่าของสาขานี้...';
+                            lucide.createIcons();
+
+                            // 3. ลบข้อมูลเก่าเฉพาะของสาขานี้ออกทั้งหมด
+                            const allEmpSnap = await getDocs(collection(db, employeesPath));
+                            const oldEmps = allEmpSnap.docs.filter(d => d.data().branchId === bId);
+                            for (const oldEmp of oldEmps) {
+                                await deleteDoc(doc(db, employeesPath, oldEmp.id));
+                            }
+
+                            btnSubmit.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> กำลังอัปโหลดชุดใหม่...';
+                            statusDiv.innerText = `กำลังนำเข้าข้อมูลใหม่ จำนวน ${validEmployees.length} รายการ...`;
+                            lucide.createIcons();
+
+                            // 4. นำเข้าข้อมูลใหม่ทั้งหมด
+                            let count = 0;
+                            for (const emp of validEmployees) {
+                                await setDoc(doc(db, employeesPath, emp.empId), {
+                                    name: emp.name,
+                                    gender: emp.gender,
+                                    branchId: emp.branchId
+                                });
+                                count++;
                             }
                             
                             fileInput.value = '';
                             btnSubmit.disabled = false;
                             btnSubmit.innerHTML = origBtnHtml;
+                            statusDiv.innerText = `อัปโหลดและแทนที่ข้อมูลพนักงาน ${count} รายการสำเร็จ!`;
+                            setTimeout(() => statusDiv.classList.add('hidden-element'), 6000);
                             lucide.createIcons();
 
                             // แจ้งเตือนเมื่อสำเร็จ
-                            showGlobalMsg('อัปโหลดสำเร็จ', `นำเข้าและอัปเดตข้อมูลพนักงานเรียบร้อยแล้ว จำนวน ${count} รายการ`);
+                            showGlobalMsg('อัปโหลดสำเร็จ', `ล้างข้อมูลเก่าและนำเข้าข้อมูลใหม่เรียบร้อยแล้ว จำนวน ${count} รายการ`);
 
                         } catch (err) {
                             console.error('CSV Parse Error:', err);
                             btnSubmit.disabled = false;
                             btnSubmit.innerHTML = origBtnHtml;
                             lucide.createIcons();
-                            showGlobalMsg('ข้อผิดพลาด', 'รูปแบบไฟล์ไม่ถูกต้อง หรือไม่สามารถอัปโหลดได้');
+                            showGlobalMsg('ข้อผิดพลาด', err.message || 'รูปแบบไฟล์ไม่ถูกต้อง หรือไม่สามารถอัปโหลดได้');
                         }
                     };
 
